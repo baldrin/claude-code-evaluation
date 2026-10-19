@@ -1,0 +1,19 @@
+# Unredacted evidence originals stay local / in the secure evidence store
+evidence/**/raw/
+*.unredacted.*
+
+# Never commit credentials or local environment files
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+
+# Local Claude Code folder (settings, transcripts, caches)
+.claude/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
