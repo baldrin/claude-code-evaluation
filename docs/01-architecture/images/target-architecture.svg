@@ -46,7 +46,7 @@
 <text x="356" y="372" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="start">Isolated Win11 VDI</text>
 <text x="356" y="392" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#475569" text-anchor="start">standard user · Guardicore agent · AppLocker blocks native Claude Code</text>
 <rect x="356" y="405" width="448" height="255" rx="10" fill="#e8f1ff" stroke="#2563eb" stroke-width="1.5"/>
-<text x="370" y="428" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1e3a8a" text-anchor="start">Docker Desktop (Business) · Hyper-V VM</text>
+<text x="370" y="428" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1e3a8a" text-anchor="start">Docker Desktop · Hyper-V VM</text>
 <text x="370" y="446" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#334155" text-anchor="start">settings locked by admin · Enhanced Container Isolation · WSL disabled</text>
 <rect x="372" y="458" width="416" height="188" rx="10" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
 <text x="386" y="482" font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#9a3412" text-anchor="start">Linux dev container</text>

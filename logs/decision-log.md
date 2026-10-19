@@ -134,7 +134,7 @@ This page records every architecture and policy decision, with its context and c
 | Rancher Desktop | ❌ (WSL 2 only on Windows) | Limited | Doesn't meet the Hyper-V standard |
 | Docker Engine in WSL 2 | ❌ | Weak | Doesn't meet the standard |
 
-**Decision.** Docker Desktop (Business) with the **Hyper-V backend**. The WSL 2 engine is disabled and locked through `admin-settings.json`. Enhanced Container Isolation is on. File sharing is limited to the policy folder. Only the company registry is allowed. Sign-in is enforced ([target configuration](../docs/01-architecture/reference-architecture.md#docker-desktop-configuration-target)).
+**Decision.** Docker Desktop (Business) with the **Hyper-V backend**. The WSL 2 engine is disabled and locked through `admin-settings.json`. Enhanced Container Isolation is on. File sharing is limited to the policy folder, plus `C:\Dev` for Windows-only repos ([ADR-017](#adr-017)). Only the company registry is allowed. Sign-in is enforced ([target configuration](../docs/01-architecture/reference-architecture.md#docker-desktop-configuration-target)).
 
 **Consequences.**
 - ✅ No user-accessible Linux distro on the VDI, so WSL can be disabled entirely ([CTL-01](../docs/02-security-baseline/defense-in-depth.md#ctl-01)).
@@ -142,6 +142,20 @@ This page records every architecture and policy decision, with its context and c
 - ⚠️ Licensing cost per developer ([R-11](risk-register.md)).
 - ⚠️ Bind mounts from Windows are slower on Hyper-V, so the repo lives in a container volume ([ENV-013](../docs/03-test-plan/catalog/env.md#env-013)).
 - ⚠️ The exact Settings Management key names must be confirmed against the deployed version [verify].
+
+**Why the Business tier (added 2026-10-19).** Two separate reasons:
+
+1. **Any paid tier is required by the licence.** Docker Desktop needs a paid, per-user subscription for organizations with more than 250 employees or more than $10 million in annual revenue ([Docker pricing FAQ](https://www.docker.com/pricing/faq/)).
+2. **Our security design needs features that only Business includes.** Docker's [pricing page](https://www.docker.com/pricing/) lists these as Business-only, not in Personal, Pro, or Team:
+
+| Business-only feature | What it does for us | Without it | Control / risk / test |
+|---|---|---|---|
+| **Settings Management** (locked `admin-settings.json`) | Keeps the Hyper-V backend, WSL off, file sharing limited to the policy folder and `C:\Dev`, the daemon not exposed on TCP, and updates controlled. Developers can't change any of it. | A developer can turn WSL back on, share the whole drive, or expose the Docker daemon, which bypasses the container boundary | CTL-03 · R-01 · [ENV-002](../docs/03-test-plan/catalog/env.md#env-002) |
+| **Enhanced Container Isolation** | Stops containers from taking over Docker Desktop's VM or the host, blocks `docker.sock` mounts, and runs containers in user namespaces (which may also help the nested Claude Code sandbox) | A privileged or socket-mounting container can escape and reach the host | CTL-03 · R-01, R-16 · [ENV-006](../docs/03-test-plan/catalog/env.md#env-006), [ENV-010](../docs/03-test-plan/catalog/env.md#env-010) |
+| **Registry and Image Access Management** | Only images from the company registry (the IT-built image) can be pulled | Developers can run any public image, unscanned | CTL-02 · R-20 · [ENV-003](../docs/03-test-plan/catalog/env.md#env-003) |
+| **SSO and SCIM** (with enforced sign-in) | Docker Desktop is tied to the company organization, which is what makes the policies above apply, and offboarding happens in the identity provider | Settings and access rules don't reliably apply; licences aren't tied to people | CTL-03 · [ENV-002](../docs/03-test-plan/catalog/env.md#env-002) |
+
+Settings Management also needs a **verified company domain** in Docker's admin console, and enforced sign-in is recommended so every developer authenticates to the organization ([Settings Management](https://docs.docker.com/enterprise/security/hardened-desktop/settings-management/)). One Business seat per developer who runs Docker Desktop, in the evaluation and later on PCs.
 
 <a id="adr-006"></a>
 ### ADR-006 · Foundry authentication: Entra ID only, API keys disabled
