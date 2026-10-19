@@ -450,4 +450,9 @@ Settings Management also needs a **verified company domain** in Docker's admin c
 
 The records folder lives **outside anything the agent under test can reach** ([ADR-004](#adr-004)). Result colors are squares, so they don't clash with the policy circles (🟢🟡🔴).
 
-**Consequences.** Some companies block browser access to local files, so check Edge on the work machine. The tracker must be tested before it's added to the repo.
+**Consequences.** Some companies block browser access to local files, so check Edge on the work machine.
+
+**Update 2026-10-19.** Built and tested: [tools/tracker](../tools/tracker/README.md).
+- 18 of 18 automated core tests pass, and the built-in self-test passes 10 of 10 in a Chromium browser.
+- The full workflow was exercised in the browser, including both report formats.
+- Records-folder mode and opening from disk in Edge weren't testable here [verify]. Run the tracker's self-test in Edge on the work machine first.

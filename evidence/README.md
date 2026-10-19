@@ -35,7 +35,7 @@ Evidence is what makes the reports defensible. Every verdict in the test catalog
 
 ## Recording with the tracker
 
-The tracker (`tools/tracker/tracker.html`, [ADR-019](../logs/decision-log.md#adr-019), coming in a later change) is a single HTML file you open in Edge. You point it at the records folder, and it saves each entry and its attachments there as ordinary files, so git can version them.
+The [tracker](../tools/tracker/README.md) (`tools/tracker/tracker.html`, [ADR-019](../logs/decision-log.md#adr-019)) is a single HTML file you open in Edge. You point it at the records folder, and it saves each entry and its attachments there as ordinary files, so git can version them.
 
 | Tracker field | Maps to |
 |---|---|

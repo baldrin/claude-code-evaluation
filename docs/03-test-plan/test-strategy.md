@@ -84,7 +84,7 @@ flowchart LR
 3. **Execute** the steps exactly. If you deviate, write down why.
 4. **Capture** the expected-result proof and the negative case.
 5. **Judge** against the expected result using the [verdict rules](#verdict-rules).
-6. **Record.** Add an entry in the tracker (`tools/tracker/tracker.html`, [ADR-019](../../logs/decision-log.md#adr-019)) with the test ID, what you did, the result, any fix steps, and the attachments. Until the tracker is in place, create `evidence/<ID>/RESULT.md` from [the template](../../templates/test-result.md). Update the Result cell in the catalog. Add a row to the [evidence index](../../evidence/README.md#evidence-index).
+6. **Record.** Add an entry in the [tracker](../../tools/tracker/README.md) ([ADR-019](../../logs/decision-log.md#adr-019)) with the test ID, what you did, the result, any fix steps, and the attachments. Without the tracker, create `evidence/<ID>/RESULT.md` from [the template](../../templates/test-result.md). Update the Result cell in the catalog. Add a row to the [evidence index](../../evidence/README.md#evidence-index).
 7. **Raise** a finding ([template](../../templates/finding.md)) for any 🟨 or 🟥. Link it from the result.
 8. **Journal** the test in the day's [journal entry](../../logs/journal/README.md).
 

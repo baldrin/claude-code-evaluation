@@ -1,0 +1,2617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob: data:; media-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Evaluation test tracker</title>
+<style>
+:root {
+  --bg: #f6f7fb; --panel: #ffffff; --panel-2: #f1f4f9; --text: #0f172a; --muted: #5b6475; --line: #dde3ec;
+  --accent: #c2410c; --accent-soft: #fff1e8; --focus: #2563eb; --link: #1d4ed8;
+  --pass: #16a34a; --issue: #ca8a04; --blocker: #dc2626; --notrun: #64748b; --na: #94a3b8; --retest: #7c3aed;
+  --private: #fdf6e3; --private-line: #e6c86e; --shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.06);
+  --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1218; --panel: #171b23; --panel-2: #1e2430; --text: #e6e9ef; --muted: #9aa4b5; --line: #2b3240;
+    --accent: #fb923c; --accent-soft: #2a1d14; --link: #93c5fd; --private: #2a2516; --private-line: #8a7230; --shadow: 0 1px 2px rgba(0,0,0,.4); }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: var(--link); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 12px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--blocker); }
+.btn.primary.danger { background: var(--blocker); border-color: var(--blocker); color: #fff; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.mini { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+.icon-btn { border: none; background: transparent; padding: 2px 6px; border-radius: 6px; color: var(--muted); font-size: 15px; }
+.icon-btn:hover { background: var(--panel-2); color: var(--text); }
+.hint { color: var(--muted); font-size: 12px; }
+.shell { display: grid; grid-template-columns: 290px 1fr; height: 100vh; }
+aside { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.brand { padding: 16px 16px 10px; }
+.brand-title { font-weight: 700; font-size: 16px; }
+.brand-sub { color: var(--muted); font-size: 12px; }
+.side-actions { padding: 0 16px 10px; }
+.search { padding: 0 16px 8px; }
+.search input { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px 10px; }
+.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+.chip.on { border-color: var(--text); background: var(--panel-2); font-weight: 600; }
+nav { flex: 1; overflow: auto; padding: 4px 8px 8px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+.nav-item:hover { background: var(--panel-2); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-item .count { color: var(--muted); font-size: 12px; }
+.nav-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 4px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.minibar { display: flex; width: 100%; height: 4px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
+.minibar span { display: block; height: 100%; }
+.nav-sec { display: block; }
+.nav-sec .minibar { margin: 2px 8px 6px; width: auto; }
+.side-foot { border-top: 1px solid var(--line); padding: 12px 16px; display: grid; gap: 8px; }
+.storage { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.foot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+main { overflow: auto; min-height: 0; }
+.page { max-width: 1080px; margin: 0 auto; padding: 24px 28px 64px; }
+.page h1 { font-size: 22px; margin: 0 0 4px; }
+.page h2 { font-size: 16px; margin: 28px 0 10px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.spacer { flex: 1; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+.tile .n { font-size: 24px; font-weight: 700; }
+.tile .l { color: var(--muted); font-size: 12px; }
+.bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--panel-2); }
+.bar span { display: block; height: 100%; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+table.grid { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+table.grid th, table.grid td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.grid th { background: var(--panel-2); font-size: 12px; color: var(--muted); font-weight: 600; }
+table.grid tr:last-child td { border-bottom: none; }
+.list { display: grid; gap: 8px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.row:hover { border-color: var(--muted); }
+.row .t { flex: 1; min-width: 0; }
+.row .t .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .t .meta { color: var(--muted); font-size: 12px; }
+.sq { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.tid { font-family: var(--mono); font-size: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.empty { color: var(--muted); padding: 28px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+.editor .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.save-ind { font-size: 12px; color: var(--muted); }
+.save-ind.err { color: var(--blocker); font-weight: 600; }
+.title-input { width: 100%; font-size: 22px; font-weight: 700; padding: 6px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; }
+.title-input:hover, .title-input:focus { border-color: var(--line); background: var(--panel); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 10px 0; }
+.meta-row label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.meta-row select, .meta-row input, .env-grid input, .form input[type=text], .form select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-width: 220px; }
+.cat-hint { font-size: 12px; color: var(--muted); padding-bottom: 8px; }
+.status-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.status-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 5px 12px; font-weight: 600; }
+.status-btn.on { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); color: var(--c); }
+.dates { color: var(--muted); font-size: 12px; margin: 6px 0 14px; }
+.field { margin: 14px 0; }
+.field-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.field-head label { font-weight: 600; }
+textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); resize: vertical; min-height: 76px; font: 13px/1.5 var(--mono); }
+.field.private { background: var(--private); border: 1px solid var(--private-line); border-radius: var(--radius); padding: 10px 12px; }
+.field.private textarea { background: transparent; border-color: var(--private-line); }
+details.env { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; }
+details.env summary { cursor: pointer; font-weight: 600; }
+.env-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+.env-grid label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.env-grid input { min-width: 0; width: 100%; }
+.dropzone { border: 2px dashed var(--line); border-radius: var(--radius); padding: 16px; text-align: center; color: var(--muted); }
+.dropzone.over { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.att-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+.att { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.att .thumb { height: 120px; display: flex; align-items: center; justify-content: center; background: var(--panel-2); cursor: zoom-in; font-size: 34px; }
+.att .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.att .info { padding: 8px; display: grid; gap: 6px; }
+.att .fname { font-family: var(--mono); font-size: 11px; word-break: break-all; }
+.att input { width: 100%; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); font-size: 12px; }
+.att .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.welcome { max-width: 860px; margin: 0 auto; padding: 56px 28px; }
+.welcome h1 { font-size: 26px; margin: 0 0 8px; }
+.wcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 22px 0; }
+.wcards .card { padding: 18px; display: grid; gap: 10px; align-content: start; }
+.wcards h3 { margin: 0; }
+.warn { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+@media (prefers-color-scheme: dark) { .warn { background: #2a1d14; color: #fdba74; } }
+.modal-back { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+.modal { background: var(--panel); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); width: min(720px, 100%); max-height: 90vh; display: flex; flex-direction: column; }
+.modal.wide { width: min(1100px, 100%); }
+.modal header { padding: 16px 20px 6px; font-weight: 700; font-size: 16px; }
+.modal .body { padding: 6px 20px 12px; overflow: auto; }
+.modal footer { padding: 12px 20px 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); }
+.form { display: grid; gap: 12px; }
+.form label.row2 { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.form fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.form fieldset label { display: inline-flex; gap: 6px; align-items: center; margin: 3px 14px 3px 0; }
+.form fieldset .env-grid label { display: grid; gap: 4px; margin: 0; }
+.lightbox img { max-width: 100%; display: block; margin: 0 auto; }
+pre.text { white-space: pre-wrap; word-break: break-word; font: 12px/1.45 var(--mono); background: var(--panel-2); border-radius: 8px; padding: 10px; max-height: 60vh; overflow: auto; }
+.toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 60; }
+.toast { background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow); max-width: 420px; }
+.toast.err { background: var(--blocker); color: #fff; }
+.results li { margin: 4px 0; }
+.ok { color: var(--pass); font-weight: 700; } .bad { color: var(--blocker); font-weight: 700; }
+.sec-head { display: flex; align-items: center; gap: 8px; }
+.sec-head input { font-size: 20px; font-weight: 700; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+@media (max-width: 760px) { .shell { grid-template-columns: 1fr; } aside { display: none; } .page { padding: 16px; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toasts" id="toasts"></div>
+<input type="file" id="file-picker" multiple hidden>
+<input type="file" id="backup-picker" accept=".json,application/json" hidden>
+<datalist id="catalog-ids"></datalist>
+
+<script id="catalog-data" type="application/json">
+[
+{
+"id": "COST-001",
+"pri": "P0",
+"title": "OTel cost reconciles with Azure Cost Management",
+"domain": "COST"
+},
+{
+"id": "COST-002",
+"pri": "P0",
+"title": "`modelPricing` matches contracted Foundry rates",
+"domain": "COST"
+},
+{
+"id": "COST-003",
+"pri": "P1",
+"title": "Same task across models and effort levels",
+"domain": "COST"
+},
+{
+"id": "COST-004",
+"pri": "P1",
+"title": "Prompt cache hit ratio and 1-hour TTL effect",
+"domain": "COST"
+},
+{
+"id": "COST-005",
+"pri": "P1",
+"title": "`--max-budget-usd` stops a headless run",
+"domain": "COST"
+},
+{
+"id": "COST-006",
+"pri": "P1",
+"title": "Azure budget alerts fire",
+"domain": "COST"
+},
+{
+"id": "COST-007",
+"pri": "P1",
+"title": "TPM quota and 429 behavior",
+"domain": "COST"
+},
+{
+"id": "COST-008",
+"pri": "P1",
+"title": "Subagent model choice impact",
+"domain": "COST"
+},
+{
+"id": "COST-009",
+"pri": "P2",
+"title": "Auto-compact window impact",
+"domain": "COST"
+},
+{
+"id": "COST-010",
+"pri": "P1",
+"title": "Haiku deployment for background tasks",
+"domain": "COST"
+},
+{
+"id": "COST-011",
+"pri": "P1",
+"title": "1M-context deployment naming / `modelOverrides`",
+"domain": "COST"
+},
+{
+"id": "COST-012",
+"pri": "P1",
+"title": "Phase 1 evaluator cost-per-day baseline",
+"domain": "COST"
+},
+{
+"id": "COST-013",
+"pri": "P0",
+"title": "Per-user spend cap blocks at the limit",
+"domain": "COST"
+},
+{
+"id": "COST-014",
+"pri": "P1",
+"title": "Spend-notification emails at thresholds",
+"domain": "COST"
+},
+{
+"id": "COST-015",
+"pri": "P0",
+"title": "Runaway detection stops a user with a zero cap",
+"domain": "COST"
+},
+{
+"id": "COST-016",
+"pri": "P1",
+"title": "Client-side agent limits enforced",
+"domain": "COST"
+},
+{
+"id": "DATA-001",
+"pri": "P0",
+"title": "Foundry hosting option documented and approved",
+"domain": "DATA"
+},
+{
+"id": "DATA-002",
+"pri": "P0",
+"title": "Retention and training terms confirmed in contract",
+"domain": "DATA"
+},
+{
+"id": "DATA-003",
+"pri": "P1",
+"title": "Transcript location, persistence, cleanup",
+"domain": "DATA"
+},
+{
+"id": "DATA-004",
+"pri": "P0",
+"title": "OTel content flags off and managed",
+"domain": "DATA"
+},
+{
+"id": "DATA-005",
+"pri": "P0",
+"title": "Prompt-injection drill: hostile repo file",
+"domain": "DATA"
+},
+{
+"id": "DATA-006",
+"pri": "P1",
+"title": "Denied secrets never appear in transcripts",
+"domain": "DATA"
+},
+{
+"id": "DATA-007",
+"pri": "P1",
+"title": "`/feedback` and `/bug` disabled",
+"domain": "DATA"
+},
+{
+"id": "DATA-008",
+"pri": "P1",
+"title": "Error reporting disabled",
+"domain": "DATA"
+},
+{
+"id": "DATA-009",
+"pri": "P2",
+"title": "`/export` output handling",
+"domain": "DATA"
+},
+{
+"id": "DATA-010",
+"pri": "P1",
+"title": "Auto memory location and contents",
+"domain": "DATA"
+},
+{
+"id": "DATA-011",
+"pri": "P1",
+"title": "Prompt injection via fetched web content",
+"domain": "DATA"
+},
+{
+"id": "DATA-012",
+"pri": "P2",
+"title": "Image and screenshot input handling",
+"domain": "DATA"
+},
+{
+"id": "DATA-013",
+"pri": "P1",
+"title": "Evaluation records are outside the agent's reach",
+"domain": "DATA"
+},
+{
+"id": "ENV-001",
+"pri": "P0",
+"title": "VDI supports nested virtualization and Hyper-V",
+"domain": "ENV"
+},
+{
+"id": "ENV-002",
+"pri": "P0",
+"title": "Docker Desktop on the Hyper-V backend, settings locked",
+"domain": "ENV"
+},
+{
+"id": "ENV-003",
+"pri": "P0",
+"title": "Only the IT-built image from the controlled registry runs",
+"domain": "ENV"
+},
+{
+"id": "ENV-004",
+"pri": "P0",
+"title": "Container runs as non-root without sudo",
+"domain": "ENV"
+},
+{
+"id": "ENV-005",
+"pri": "P0",
+"title": "Claude Code version pinned; auto-updater off",
+"domain": "ENV"
+},
+{
+"id": "ENV-006",
+"pri": "P0",
+"title": "Built-in sandbox works inside the container",
+"domain": "ENV"
+},
+{
+"id": "ENV-007",
+"pri": "P0",
+"title": "Native Windows install is blocked",
+"domain": "ENV"
+},
+{
+"id": "ENV-008",
+"pri": "P1",
+"title": "Windows managed-settings backstop is present",
+"domain": "ENV"
+},
+{
+"id": "ENV-009",
+"pri": "P0",
+"title": "VS Code attaches; Claude Code extension runs in the container",
+"domain": "ENV"
+},
+{
+"id": "ENV-010",
+"pri": "P0",
+"title": "Developers can't launch privileged or host-mounting containers",
+"domain": "ENV"
+},
+{
+"id": "ENV-011",
+"pri": "P0",
+"title": "No privileged mode, no docker.sock, NET_ADMIN dropped",
+"domain": "ENV"
+},
+{
+"id": "ENV-012",
+"pri": "P1",
+"title": "Only the workspace and ~/.claude persist",
+"domain": "ENV"
+},
+{
+"id": "ENV-013",
+"pri": "P2",
+"title": "Container performance vs. baseline",
+"domain": "ENV"
+},
+{
+"id": "ENV-014",
+"pri": "P1",
+"title": "`claude doctor` passes",
+"domain": "ENV"
+},
+{
+"id": "ENV-015",
+"pri": "P2",
+"title": "Image rebuilds reproducibly",
+"domain": "ENV"
+},
+{
+"id": "ENV-016",
+"pri": "P0",
+"title": "Image installs pinned Claude Code from Nexus only",
+"domain": "ENV"
+},
+{
+"id": "ENV-017",
+"pri": "P1",
+"title": "Package managers resolve only through Nexus",
+"domain": "ENV"
+},
+{
+"id": "ENV-018",
+"pri": "P1",
+"title": "VS Code Server and extensions work offline",
+"domain": "ENV"
+},
+{
+"id": "ENV-019",
+"pri": "P1",
+"title": "Repo .NET/VB.NET capability tier classified",
+"domain": "ENV"
+},
+{
+"id": "ENV-020",
+"pri": "P1",
+"title": "Shared-folder workflow for Windows-only repos",
+"domain": "ENV"
+},
+{
+"id": "ENV-021",
+"pri": "P1",
+"title": "Guardicore restricts container traffic at the host",
+"domain": "ENV"
+},
+{
+"id": "ENV-022",
+"pri": "P1",
+"title": "PC prerequisites checklist",
+"domain": "ENV"
+},
+{
+"id": "EXT-001",
+"pri": "P0",
+"title": "Project `.mcp.json` servers don't load",
+"domain": "EXT"
+},
+{
+"id": "EXT-002",
+"pri": "P0",
+"title": "User-added MCP servers don't load",
+"domain": "EXT"
+},
+{
+"id": "EXT-003",
+"pri": "P0",
+"title": "Plugin and marketplace installs blocked",
+"domain": "EXT"
+},
+{
+"id": "EXT-004",
+"pri": "P0",
+"title": "Sideload flags rejected",
+"domain": "EXT"
+},
+{
+"id": "EXT-005",
+"pri": "P0",
+"title": "Unmanaged hooks don't run",
+"domain": "EXT"
+},
+{
+"id": "EXT-006",
+"pri": "P1",
+"title": "Managed audit hook fires and logs",
+"domain": "EXT"
+},
+{
+"id": "EXT-007",
+"pri": "P1",
+"title": "Project statusLine doesn't run",
+"domain": "EXT"
+},
+{
+"id": "EXT-008",
+"pri": "P1",
+"title": "Project skills policy enforced",
+"domain": "EXT"
+},
+{
+"id": "EXT-009",
+"pri": "P1",
+"title": "Project subagents policy enforced",
+"domain": "EXT"
+},
+{
+"id": "EXT-010",
+"pri": "P1",
+"title": "`disableSkillShellExecution` works",
+"domain": "EXT"
+},
+{
+"id": "EXT-011",
+"pri": "P1",
+"title": "claude.ai connectors disabled",
+"domain": "EXT"
+},
+{
+"id": "EXT-012",
+"pri": "P2",
+"title": "Approved MCP server works under the allowlist (if any)",
+"domain": "EXT"
+},
+{
+"id": "EXT-013",
+"pri": "P2",
+"title": "Output styles",
+"domain": "EXT"
+},
+{
+"id": "EXT-014",
+"pri": "P1",
+"title": "Mods restricted",
+"domain": "EXT"
+},
+{
+"id": "EXT-015",
+"pri": "P1",
+"title": "Helper commands from user settings not honored",
+"domain": "EXT"
+},
+{
+"id": "FEAT-001",
+"pri": "P1",
+"title": "Interactive basics: prompt, @ mentions, `!` shell, image paste",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-002",
+"pri": "P1",
+"title": "Plan mode workflow end to end",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-003",
+"pri": "P1",
+"title": "Checkpoints and `/rewind`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-004",
+"pri": "P1",
+"title": "CLAUDE.md, `/init`, rules, `/memory`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-005",
+"pri": "P1",
+"title": "Auto memory",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-006",
+"pri": "P1",
+"title": "Context management: `/compact`, `/clear`, `/context`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-007",
+"pri": "P1",
+"title": "Built-in subagents",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-008",
+"pri": "P1",
+"title": "Custom subagent definitions",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-009",
+"pri": "P1",
+"title": "Skills (bundled and project)",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-010",
+"pri": "P1",
+"title": "Worktrees (`-w`)",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-011",
+"pri": "P1",
+"title": "Background tasks and agent view",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-012",
+"pri": "P0",
+"title": "Headless mode (`-p`) with JSON output",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-013",
+"pri": "P1",
+"title": "`/code-review`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-014",
+"pri": "P1",
+"title": "`/security-review`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-015",
+"pri": "P0",
+"title": "Git workflow with attribution trailer",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-016",
+"pri": "P2",
+"title": "Todo / task list",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-017",
+"pri": "P1",
+"title": "Sessions: `/resume`, `--continue`, naming, `/export`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-018",
+"pri": "P1",
+"title": "`/model` and `/effort` switching",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-019",
+"pri": "P1",
+"title": "Managed quality-gate hooks",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-020",
+"pri": "P2",
+"title": "`stream-json` and `--json-schema`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-021",
+"pri": "P2",
+"title": "`/loop` and local scheduled tasks",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-022",
+"pri": "P2",
+"title": "Agent teams (experimental)",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-023",
+"pri": "P2",
+"title": "`/simplify` and `/batch`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-024",
+"pri": "P2",
+"title": "UI: keybindings, themes, editor mode, terminal setup, status line",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-025",
+"pri": "P1",
+"title": "Diagnostics: `/doctor`, `/debug`, `/status`, `/usage`, `/context`",
+"domain": "FEAT"
+},
+{
+"id": "FEAT-026",
+"pri": "P1",
+"title": "`/diff` and reviewing changes",
+"domain": "FEAT"
+},
+{
+"id": "IDN-001",
+"pri": "P0",
+"title": "Foundry auth with Entra ID works in the container",
+"domain": "IDN"
+},
+{
+"id": "IDN-002",
+"pri": "P0",
+"title": "API-key auth disabled on Foundry",
+"domain": "IDN"
+},
+{
+"id": "IDN-003",
+"pri": "P1",
+"title": "Foundry bearer token: lifetime and refresh",
+"domain": "IDN"
+},
+{
+"id": "IDN-004",
+"pri": "P0",
+"title": "Minimal custom RBAC role suffices",
+"domain": "IDN"
+},
+{
+"id": "IDN-005",
+"pri": "P0",
+"title": "Per-user identity in Azure logs",
+"domain": "IDN"
+},
+{
+"id": "IDN-006",
+"pri": "P0",
+"title": "GitHub token can't reach any other repo",
+"domain": "IDN"
+},
+{
+"id": "IDN-007",
+"pri": "P0",
+"title": "Branch protection blocks direct pushes to main",
+"domain": "IDN"
+},
+{
+"id": "IDN-008",
+"pri": "P0",
+"title": "Claude can't read Azure/GitHub/Foundry credentials",
+"domain": "IDN"
+},
+{
+"id": "IDN-009",
+"pri": "P1",
+"title": "Token expiry mid-session behaves gracefully",
+"domain": "IDN"
+},
+{
+"id": "IDN-010",
+"pri": "P1",
+"title": "GitHub token can't change workflows/secrets/settings",
+"domain": "IDN"
+},
+{
+"id": "IDN-011",
+"pri": "P1",
+"title": "Offboarding revokes access within target time",
+"domain": "IDN"
+},
+{
+"id": "IDN-012",
+"pri": "P1",
+"title": "`/status` reports Microsoft Foundry",
+"domain": "IDN"
+},
+{
+"id": "IDN-013",
+"pri": "P2",
+"title": "Signed commits (if required)",
+"domain": "IDN"
+},
+{
+"id": "IDN-014",
+"pri": "P0",
+"title": "Gateway sign-in with Entra; only a short-lived token in the container",
+"domain": "IDN"
+},
+{
+"id": "IDN-015",
+"pri": "P1",
+"title": "Only the gateway's managed identity can call Foundry",
+"domain": "IDN"
+},
+{
+"id": "IDN-016",
+"pri": "P1",
+"title": "Nexus access from the container is read-only",
+"domain": "IDN"
+},
+{
+"id": "NET-001",
+"pri": "P0",
+"title": "Firewall default-denies and allows the allowlist",
+"domain": "NET"
+},
+{
+"id": "NET-002",
+"pri": "P0",
+"title": "Non-allowlisted hosts unreachable from any process",
+"domain": "NET"
+},
+{
+"id": "NET-003",
+"pri": "P0",
+"title": "No nonessential vendor traffic in a full session",
+"domain": "NET"
+},
+{
+"id": "NET-004",
+"pri": "P0",
+"title": "Foundry endpoint works end to end",
+"domain": "NET"
+},
+{
+"id": "NET-005",
+"pri": "P1",
+"title": "Corporate proxy + TLS inspection",
+"domain": "NET"
+},
+{
+"id": "NET-006",
+"pri": "P1",
+"title": "WebFetch behavior and preflight",
+"domain": "NET"
+},
+{
+"id": "NET-007",
+"pri": "P0",
+"title": "WebSearch unavailable in every session type",
+"domain": "NET"
+},
+{
+"id": "NET-008",
+"pri": "P1",
+"title": "DNS exfiltration blocked or logged",
+"domain": "NET"
+},
+{
+"id": "NET-009",
+"pri": "P0",
+"title": "github.com exfil path closed by the scoped token",
+"domain": "NET"
+},
+{
+"id": "NET-010",
+"pri": "P1",
+"title": "Package installs via the internal mirror only",
+"domain": "NET"
+},
+{
+"id": "NET-011",
+"pri": "P2",
+"title": "mTLS client certificates (if required)",
+"domain": "NET"
+},
+{
+"id": "NET-012",
+"pri": "P1",
+"title": "Egress logs captured for audit",
+"domain": "NET"
+},
+{
+"id": "NET-013",
+"pri": "P2",
+"title": "IPv6 egress blocked",
+"domain": "NET"
+},
+{
+"id": "NET-014",
+"pri": "P0",
+"title": "Container firewall holds on an internet-connected host",
+"domain": "NET"
+},
+{
+"id": "NET-015",
+"pri": "P1",
+"title": "Off the VPN, sessions fail closed",
+"domain": "NET"
+},
+{
+"id": "NET-016",
+"pri": "P1",
+"title": "Private DNS and Foundry private endpoint",
+"domain": "NET"
+},
+{
+"id": "OPS-001",
+"pri": "P1",
+"title": "Upgrade via image rebuild and version gates",
+"domain": "OPS"
+},
+{
+"id": "OPS-002",
+"pri": "P1",
+"title": "Rollback to the previous image",
+"domain": "OPS"
+},
+{
+"id": "OPS-003",
+"pri": "P0",
+"title": "Kill switch within target time",
+"domain": "OPS"
+},
+{
+"id": "OPS-004",
+"pri": "P0",
+"title": "Offboarding end to end",
+"domain": "OPS"
+},
+{
+"id": "OPS-005",
+"pri": "P0",
+"title": "Incident reconstruction from logs",
+"domain": "OPS"
+},
+{
+"id": "OPS-006",
+"pri": "P1",
+"title": "Support and triage process",
+"domain": "OPS"
+},
+{
+"id": "OPS-007",
+"pri": "P1",
+"title": "New-developer onboarding time",
+"domain": "OPS"
+},
+{
+"id": "OPS-008",
+"pri": "P1",
+"title": "Policy change rollout to the VDI fleet",
+"domain": "OPS"
+},
+{
+"id": "OPS-009",
+"pri": "P2",
+"title": "Evidence and log retention",
+"domain": "OPS"
+},
+{
+"id": "OPS-010",
+"pri": "P1",
+"title": "Credential rotation",
+"domain": "OPS"
+},
+{
+"id": "OPS-011",
+"pri": "P1",
+"title": "Gateway operations runbook",
+"domain": "OPS"
+},
+{
+"id": "PERM-001",
+"pri": "P0",
+"title": "Bypass mode and `--dangerously-skip-permissions` unavailable",
+"domain": "PERM"
+},
+{
+"id": "PERM-002",
+"pri": "P0",
+"title": "Read deny rules protect secrets",
+"domain": "PERM"
+},
+{
+"id": "PERM-003",
+"pri": "P0",
+"title": "Edit/Write deny rules protect CI and policy paths",
+"domain": "PERM"
+},
+{
+"id": "PERM-004",
+"pri": "P0",
+"title": "Bash deny blocks direct invocation",
+"domain": "PERM"
+},
+{
+"id": "PERM-005",
+"pri": "P0",
+"title": "Bash deny-rule bypass variants caught by sandbox/firewall",
+"domain": "PERM"
+},
+{
+"id": "PERM-006",
+"pri": "P0",
+"title": "Allow rules don't approve chained disallowed subcommands",
+"domain": "PERM"
+},
+{
+"id": "PERM-007",
+"pri": "P1",
+"title": "Ask rule prompts before `git push`",
+"domain": "PERM"
+},
+{
+"id": "PERM-008",
+"pri": "P1",
+"title": "Default (Manual) mode prompts on first use",
+"domain": "PERM"
+},
+{
+"id": "PERM-009",
+"pri": "P1",
+"title": "`acceptEdits` limited to working dirs",
+"domain": "PERM"
+},
+{
+"id": "PERM-010",
+"pri": "P0",
+"title": "Plan mode is read-only",
+"domain": "PERM"
+},
+{
+"id": "PERM-011",
+"pri": "P1",
+"title": "Auto mode on Foundry",
+"domain": "PERM"
+},
+{
+"id": "PERM-012",
+"pri": "P1",
+"title": "`dontAsk` auto-denies",
+"domain": "PERM"
+},
+{
+"id": "PERM-013",
+"pri": "P1",
+"title": "`additionalDirectories` grants file access only",
+"domain": "PERM"
+},
+{
+"id": "PERM-014",
+"pri": "P1",
+"title": "WebFetch is disabled",
+"domain": "PERM"
+},
+{
+"id": "PERM-015",
+"pri": "P1",
+"title": "MCP tool permission rules",
+"domain": "PERM"
+},
+{
+"id": "PERM-016",
+"pri": "P2",
+"title": "`Agent(Name)` subagent rules",
+"domain": "PERM"
+},
+{
+"id": "PERM-017",
+"pri": "P1",
+"title": "\"Always allow\" choices ignored under managed-only rules",
+"domain": "PERM"
+},
+{
+"id": "PERM-018",
+"pri": "P1",
+"title": "`blockReadsOutsideWorkingDirectories`",
+"domain": "PERM"
+},
+{
+"id": "PERM-019",
+"pri": "P1",
+"title": "Ask rules on build files and registry configs",
+"domain": "PERM"
+},
+{
+"id": "POL-001",
+"pri": "P0",
+"title": "Managed file present, root-owned, mounted read-only",
+"domain": "POL"
+},
+{
+"id": "POL-002",
+"pri": "P0",
+"title": "Developer can't modify the file or add drop-ins",
+"domain": "POL"
+},
+{
+"id": "POL-003",
+"pri": "P0",
+"title": "`/status` shows the managed source",
+"domain": "POL"
+},
+{
+"id": "POL-004",
+"pri": "P0",
+"title": "User settings can't override managed rules",
+"domain": "POL"
+},
+{
+"id": "POL-005",
+"pri": "P0",
+"title": "Project and local settings can't loosen managed rules",
+"domain": "POL"
+},
+{
+"id": "POL-006",
+"pri": "P0",
+"title": "`--settings` / `--setting-sources` can't loosen managed rules",
+"domain": "POL"
+},
+{
+"id": "POL-007",
+"pri": "P0",
+"title": "`allowManagedPermissionRulesOnly` ignores non-managed rules",
+"domain": "POL"
+},
+{
+"id": "POL-008",
+"pri": "P0",
+"title": "Invalid managed JSON fails closed",
+"domain": "POL"
+},
+{
+"id": "POL-009",
+"pri": "P1",
+"title": "Drop-ins merge in documented order",
+"domain": "POL"
+},
+{
+"id": "POL-010",
+"pri": "P1",
+"title": "Version gates enforced",
+"domain": "POL"
+},
+{
+"id": "POL-011",
+"pri": "P1",
+"title": "`availableModels` restricts `/model`",
+"domain": "POL"
+},
+{
+"id": "POL-012",
+"pri": "P1",
+"title": "Managed env wins over the user's shell",
+"domain": "POL"
+},
+{
+"id": "POL-013",
+"pri": "P1",
+"title": "Provider restricted to Foundry",
+"domain": "POL"
+},
+{
+"id": "POL-014",
+"pri": "P2",
+"title": "`policyHelper` behavior",
+"domain": "POL"
+},
+{
+"id": "POL-015",
+"pri": "P1",
+"title": "ConfigChange hook records local settings edits",
+"domain": "POL"
+},
+{
+"id": "POL-016",
+"pri": "P1",
+"title": "Permission-mode policy enforced",
+"domain": "POL"
+},
+{
+"id": "POL-017",
+"pri": "P1",
+"title": "Managed CLAUDE.md delivered read-only",
+"domain": "POL"
+},
+{
+"id": "SBX-001",
+"pri": "P0",
+"title": "`failIfUnavailable` stops Claude when the sandbox can't start",
+"domain": "SBX"
+},
+{
+"id": "SBX-002",
+"pri": "P0",
+"title": "`dangerouslyDisableSandbox` requests ignored",
+"domain": "SBX"
+},
+{
+"id": "SBX-003",
+"pri": "P0",
+"title": "Bash writes outside workspace/TMPDIR blocked",
+"domain": "SBX"
+},
+{
+"id": "SBX-004",
+"pri": "P0",
+"title": "Bash can't read credential paths",
+"domain": "SBX"
+},
+{
+"id": "SBX-005",
+"pri": "P0",
+"title": "Bash egress only to `allowedDomains`",
+"domain": "SBX"
+},
+{
+"id": "SBX-006",
+"pri": "P0",
+"title": "Users and projects can't add sandbox domains",
+"domain": "SBX"
+},
+{
+"id": "SBX-007",
+"pri": "P1",
+"title": "`allowManagedReadPathsOnly` enforced",
+"domain": "SBX"
+},
+{
+"id": "SBX-008",
+"pri": "P1",
+"title": "`excludedCommands` empty or justified",
+"domain": "SBX"
+},
+{
+"id": "SBX-009",
+"pri": "P1",
+"title": "Credential masking",
+"domain": "SBX"
+},
+{
+"id": "SBX-010",
+"pri": "P1",
+"title": "Subagents inherit the sandbox",
+"domain": "SBX"
+},
+{
+"id": "SBX-011",
+"pri": "P1",
+"title": "Non-Bash tools covered by complementary controls",
+"domain": "SBX"
+},
+{
+"id": "SBX-012",
+"pri": "P1",
+"title": "`allowLocalBinding` decision",
+"domain": "SBX"
+},
+{
+"id": "SBX-013",
+"pri": "P0",
+"title": "Unix sockets unreachable",
+"domain": "SBX"
+},
+{
+"id": "SBX-014",
+"pri": "P2",
+"title": "`/sandbox` shows status",
+"domain": "SBX"
+},
+{
+"id": "SBX-015",
+"pri": "P1",
+"title": "Shell rc and `$PATH` dirs not writable",
+"domain": "SBX"
+},
+{
+"id": "SURF-001",
+"pri": "P0",
+"title": "Terminal CLI in the container",
+"domain": "SURF"
+},
+{
+"id": "SURF-002",
+"pri": "P0",
+"title": "VS Code extension in a Dev Container",
+"domain": "SURF"
+},
+{
+"id": "SURF-003",
+"pri": "P2",
+"title": "JetBrains via remote development",
+"domain": "SURF"
+},
+{
+"id": "SURF-004",
+"pri": "P1",
+"title": "GitHub Actions (claude-code-action) with Foundry",
+"domain": "SURF"
+},
+{
+"id": "SURF-005",
+"pri": "P1",
+"title": "Headless CLI in GitHub Actions with Azure OIDC",
+"domain": "SURF"
+},
+{
+"id": "SURF-006",
+"pri": "P2",
+"title": "Agent SDK with Foundry",
+"domain": "SURF"
+},
+{
+"id": "SURF-007",
+"pri": "P2",
+"title": "Desktop app with Foundry",
+"domain": "SURF"
+},
+{
+"id": "SURF-008",
+"pri": "P2",
+"title": "Web, mobile, Remote Control: confirm N/A",
+"domain": "SURF"
+},
+{
+"id": "SURF-009",
+"pri": "P2",
+"title": "Slack / Claude Tag: confirm N/A",
+"domain": "SURF"
+},
+{
+"id": "SURF-010",
+"pri": "P1",
+"title": "Chrome extension and computer use are blocked",
+"domain": "SURF"
+},
+{
+"id": "SURF-011",
+"pri": "P2",
+"title": "Routines, ultrareview, cloud sessions: confirm N/A",
+"domain": "SURF"
+},
+{
+"id": "SURF-012",
+"pri": "P2",
+"title": "GitLab CI/CD: N/A",
+"domain": "SURF"
+},
+{
+"id": "SURF-013",
+"pri": "P2",
+"title": "Optional Windows CI runner loop",
+"domain": "SURF"
+},
+{
+"id": "TEL-001",
+"pri": "P0",
+"title": "Managed OTel config exports to the collector",
+"domain": "TEL"
+},
+{
+"id": "TEL-002",
+"pri": "P0",
+"title": "All eight metrics received",
+"domain": "TEL"
+},
+{
+"id": "TEL-003",
+"pri": "P0",
+"title": "Key events received",
+"domain": "TEL"
+},
+{
+"id": "TEL-004",
+"pri": "P0",
+"title": "Resource attributes (user, team, cohort) present",
+"domain": "TEL"
+},
+{
+"id": "TEL-005",
+"pri": "P0",
+"title": "Repo settings can't redirect exporters",
+"domain": "TEL"
+},
+{
+"id": "TEL-006",
+"pri": "P1",
+"title": "User identity mapping works without OAuth",
+"domain": "TEL"
+},
+{
+"id": "TEL-007",
+"pri": "P1",
+"title": "Export interval and delta temporality handled",
+"domain": "TEL"
+},
+{
+"id": "TEL-008",
+"pri": "P1",
+"title": "Prompts redacted with content flags off",
+"domain": "TEL"
+},
+{
+"id": "TEL-009",
+"pri": "P1",
+"title": "Survives network blips; flushes on exit",
+"domain": "TEL"
+},
+{
+"id": "TEL-010",
+"pri": "P2",
+"title": "Beta tracing spans",
+"domain": "TEL"
+},
+{
+"id": "TEL-011",
+"pri": "P1",
+"title": "Hook, compaction, subagent events",
+"domain": "TEL"
+},
+{
+"id": "TEL-012",
+"pri": "P1",
+"title": "Dashboards: cost, usage, adoption by user/team",
+"domain": "TEL"
+},
+{
+"id": "TEL-013",
+"pri": "P1",
+"title": "Gateway relays identity-stamped telemetry",
+"domain": "TEL"
+},
+{
+"id": "TEL-014",
+"pri": "P1",
+"title": "Gateway audit events reach the log platform",
+"domain": "TEL"
+}
+]
+</script>
+
+<script id="core">
+/* Core logic: storage, data model, reports. No DOM access, so it can be tested outside the browser. */
+(function (global) {
+  'use strict';
+  const SCHEMA = 1;
+  const STATUSES = [
+    { key: 'pass', label: 'Pass', icon: '🟩', color: '#16a34a' },
+    { key: 'issue', label: 'Issue', icon: '🟨', color: '#ca8a04' },
+    { key: 'blocker', label: 'Blocker', icon: '🟥', color: '#dc2626' },
+    { key: 'notrun', label: 'Not run', icon: '⏳', color: '#64748b' },
+    { key: 'na', label: 'N/A', icon: '⏭', color: '#94a3b8' },
+    { key: 'retest', label: 'Retest', icon: '🔁', color: '#7c3aed' },
+  ];
+  const STATUS = Object.fromEntries(STATUSES.map((s) => [s.key, s]));
+  const TEXT_FIELDS = [
+    { key: 'whatIDid', label: 'What I did' },
+    { key: 'result', label: 'Result' },
+    { key: 'fixSteps', label: 'Steps to fix / what I tried' },
+    { key: 'notes', label: 'Notes and exceptions' },
+  ];
+  const ENV_FIELDS = [
+    { key: 'tester', label: 'Tester' },
+    { key: 'claudeVersion', label: 'Claude Code version' },
+    { key: 'imageDigest', label: 'Image digest' },
+    { key: 'policyVersion', label: 'Policy version / hash' },
+  ];
+  const DOMAINS = [
+    ['ENV', 'Environment'], ['POL', 'Managed policy'], ['PERM', 'Permissions'], ['SBX', 'Sandbox'],
+    ['NET', 'Network egress'], ['IDN', 'Identity'], ['DATA', 'Data handling'], ['EXT', 'Extensions'],
+    ['TEL', 'Telemetry'], ['COST', 'Cost'], ['FEAT', 'Features'], ['SURF', 'Surfaces'], ['OPS', 'Operations'],
+  ];
+
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  const dateStamp = (d = new Date()) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  const timeStamp = (d = new Date()) => `${dateStamp(d)}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  function rand(n = 4) {
+    const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const b = new Uint8Array(n); crypto.getRandomValues(b);
+    let s = ''; for (const x of b) s += abc[x % abc.length]; return s;
+  }
+  const newId = (prefix) => `${prefix}-${timeStamp()}-${rand()}`;
+  function slugify(s, max = 48) {
+    s = String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (s.length > max) s = s.slice(0, max).replace(/-+$/, '');
+    return s || 'file';
+  }
+  const cleanTestId = (s) => String(s || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  const MIME_EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp', 'image/bmp': 'bmp',
+    'image/svg+xml': 'svg', 'text/plain': 'txt', 'text/csv': 'csv', 'text/html': 'html', 'application/json': 'json',
+    'application/pdf': 'pdf', 'video/mp4': 'mp4', 'application/zip': 'zip' };
+  function extOf(name, type) {
+    const m = /\.([A-Za-z0-9]{1,8})$/.exec(name || '');
+    return m ? m[1].toLowerCase() : (MIME_EXT[type] || 'bin');
+  }
+  const stemOf = (name) => String(name || '').replace(/\.[A-Za-z0-9]{1,8}$/, '');
+  const isImage = (a) => /^image\/(png|jpe?g|gif|webp|bmp)$/.test(a.type || '') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(a.name || '');
+  const isText = (a) => /^text\//.test(a.type || '') || /(json|xml|yaml|csv)/.test(a.type || '') ||
+    /\.(txt|log|json|ya?ml|csv|md|xml|ini|conf|cfg|sh|ps1|out|err|diff|patch|toml)$/i.test(a.name || '');
+  function escapeHTML(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function fmtBytes(n) {
+    if (!Number.isFinite(n)) return '';
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  async function toBase64(blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function fromBase64(b64) {
+    const bin = atob(b64); const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  /* Storage on any FileSystemDirectoryHandle: a folder the user picked, or browser (OPFS) storage. */
+  class Store {
+    constructor(root, label) { this.root = root; this.label = label || root.name || 'records'; }
+    static split(path) { return String(path).split('/').filter(Boolean); }
+    async dir(parts, create) {
+      let d = this.root;
+      for (const p of parts) d = await d.getDirectoryHandle(p, { create });
+      return d;
+    }
+    async fileHandle(path, create) {
+      const parts = Store.split(path); const name = parts.pop();
+      const d = await this.dir(parts, create);
+      return d.getFileHandle(name, { create });
+    }
+    async exists(path) { try { await this.fileHandle(path, false); return true; } catch (e) { return false; } }
+    async readFile(path) { return (await this.fileHandle(path, false)).getFile(); }
+    async readText(path) { return (await this.readFile(path)).text(); }
+    async readJSON(path) { return JSON.parse(await this.readText(path)); }
+    async writeFile(path, data) {
+      const h = await this.fileHandle(path, true);
+      const w = await h.createWritable();
+      try { await w.write(data); } finally { await w.close(); }
+    }
+    async writeJSON(path, obj) {
+      await this.writeFile(path, new Blob([JSON.stringify(obj, null, 2) + '\n'], { type: 'application/json' }));
+    }
+    async list(dirPath) {
+      let d;
+      try { d = await this.dir(Store.split(dirPath), false); } catch (e) { return []; }
+      const out = [];
+      for await (const [name, h] of d.entries()) out.push({ name, kind: h.kind });
+      return out;
+    }
+    async remove(path) {
+      const parts = Store.split(path); const name = parts.pop();
+      let d;
+      try { d = await this.dir(parts, false); } catch (e) { return; }
+      try { await d.removeEntry(name); } catch (e) { if (!e || e.name !== 'NotFoundError') throw e; }
+    }
+    async uniquePath(dirPath, base, ext) {
+      let p = `${dirPath}/${base}.${ext}`;
+      for (let i = 2; await this.exists(p); i++) p = `${dirPath}/${base}-${i}.${ext}`;
+      return p;
+    }
+  }
+
+  function normalizeEntry(e) {
+    const out = Object.assign({
+      schema: SCHEMA, id: newId('e'), sectionId: '', title: '', testId: '', status: 'notrun',
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      whatIDid: '', result: '', fixSteps: '', notes: '', privateNotes: '', env: {}, attachments: [],
+    }, e || {});
+    if (!STATUS[out.status]) out.status = 'notrun';
+    out.env = Object.assign({ tester: '', claudeVersion: '', imageDigest: '', policyVersion: '' }, out.env || {});
+    out.attachments = Array.isArray(out.attachments) ? out.attachments : [];
+    return out;
+  }
+  function newProject() {
+    return {
+      schema: SCHEMA, title: 'Claude Code evaluation', reportTitle: 'Claude Code evaluation · test record',
+      createdAt: new Date().toISOString(), sections: [],
+      defaults: { tester: '', claudeVersion: '', imageDigest: '', policyVersion: '' },
+    };
+  }
+
+  class Tracker {
+    constructor(store) { this.store = store; this.project = null; this.entries = new Map(); this.queues = new Map(); this.loadErrors = []; }
+    async load() {
+      this.loadErrors = [];
+      if (await this.store.exists('tracker.json')) {
+        this.project = Object.assign(newProject(), await this.store.readJSON('tracker.json'));
+      } else {
+        this.project = newProject();
+        await this.saveProject();
+      }
+      this.project.sections = Array.isArray(this.project.sections) ? this.project.sections : [];
+      this.project.defaults = Object.assign(newProject().defaults, this.project.defaults || {});
+      this.entries.clear();
+      for (const f of await this.store.list('entries')) {
+        if (f.kind !== 'file' || !f.name.endsWith('.json')) continue;
+        try {
+          const e = normalizeEntry(await this.store.readJSON(`entries/${f.name}`));
+          this.entries.set(e.id, e);
+        } catch (err) { this.loadErrors.push(`${f.name}: ${err.message}`); }
+      }
+      return this;
+    }
+    saveProject() { return this.store.writeJSON('tracker.json', this.project); }
+    section(id) { return this.project.sections.find((s) => s.id === id); }
+    async addSection(name) {
+      const s = { id: newId('s'), name: String(name || '').trim() || 'Untitled section' };
+      this.project.sections.push(s);
+      await this.saveProject();
+      return s;
+    }
+    async renameSection(id, name) {
+      const s = this.section(id); if (!s) return;
+      s.name = String(name || '').trim() || s.name;
+      await this.saveProject();
+    }
+    async moveSection(id, delta) {
+      const a = this.project.sections; const i = a.findIndex((s) => s.id === id); const j = i + delta;
+      if (i < 0 || j < 0 || j >= a.length) return;
+      [a[i], a[j]] = [a[j], a[i]];
+      await this.saveProject();
+    }
+    async deleteSection(id) {
+      if (this.entriesIn(id).length) throw new Error('Move or delete the entries in this section first.');
+      this.project.sections = this.project.sections.filter((s) => s.id !== id);
+      await this.saveProject();
+    }
+    async addStandardSections() {
+      const have = new Set(this.project.sections.map((s) => s.name));
+      const added = [];
+      for (const [code, name] of DOMAINS) {
+        const label = `${code} · ${name}`;
+        if (!have.has(label)) { const s = { id: newId('s'), name: label }; this.project.sections.push(s); added.push(s); }
+      }
+      await this.saveProject();
+      return added;
+    }
+    entriesIn(sectionId) {
+      return [...this.entries.values()].filter((e) => e.sectionId === sectionId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    }
+    orphanEntries() {
+      const ids = new Set(this.project.sections.map((s) => s.id));
+      return [...this.entries.values()].filter((e) => !ids.has(e.sectionId)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    }
+    async newEntry(sectionId, init) {
+      const e = normalizeEntry(Object.assign({ id: newId('e'), sectionId, env: Object.assign({}, this.project.defaults) }, init || {}));
+      e.testId = cleanTestId(e.testId);
+      this.entries.set(e.id, e);
+      await this.saveEntry(e);
+      return e;
+    }
+    saveEntry(e, touch = true) {
+      if (touch) e.updatedAt = new Date().toISOString();
+      const prev = this.queues.get(e.id) || Promise.resolve();
+      const snapshot = JSON.parse(JSON.stringify(e));
+      const p = prev.catch(() => {}).then(() => this.store.writeJSON(`entries/${e.id}.json`, snapshot));
+      this.queues.set(e.id, p);
+      return p;
+    }
+    async idle() { await Promise.all([...this.queues.values()].map((p) => p.catch(() => {}))); }
+    attachmentDir(e) {
+      const t = cleanTestId(e.testId);
+      return t ? `evidence/${t}` : `evidence/_entries/${e.id}`;
+    }
+    async addAttachment(e, file, opts) {
+      const o = opts || {};
+      const name = o.name || file.name || 'attachment';
+      const ext = extOf(name, file.type);
+      const base = `${dateStamp()}-${slugify(o.caption || stemOf(name))}`;
+      const path = await this.store.uniquePath(this.attachmentDir(e), base, ext);
+      await this.store.writeFile(path, file);
+      const a = { id: newId('a'), name: path.split('/').pop(), path, type: file.type || '', size: file.size,
+        caption: o.caption || '', original: name, addedAt: new Date().toISOString() };
+      e.attachments.push(a);
+      await this.saveEntry(e);
+      return a;
+    }
+    async removeAttachment(e, attId) {
+      const a = e.attachments.find((x) => x.id === attId); if (!a) return;
+      await this.store.remove(a.path);
+      e.attachments = e.attachments.filter((x) => x.id !== attId);
+      await this.saveEntry(e);
+    }
+    readAttachment(a) { return this.store.readFile(a.path); }
+    async setTestId(e, testId) {
+      const before = this.attachmentDir(e);
+      e.testId = cleanTestId(testId);
+      const after = this.attachmentDir(e);
+      if (before !== after) {
+        for (const a of e.attachments) {
+          const f = await this.store.readFile(a.path);
+          const np = await this.store.uniquePath(after, stemOf(a.name), extOf(a.name, a.type));
+          await this.store.writeFile(np, f);
+          await this.store.remove(a.path);
+          a.path = np; a.name = np.split('/').pop();
+        }
+      }
+      await this.saveEntry(e);
+    }
+    async deleteEntry(id) {
+      const e = this.entries.get(id); if (!e) return;
+      await (this.queues.get(id) || Promise.resolve()).catch(() => {});
+      for (const a of e.attachments) await this.store.remove(a.path);
+      await this.store.remove(`entries/${id}.json`);
+      this.entries.delete(id); this.queues.delete(id);
+    }
+    allEntries() { return [...this.entries.values()]; }
+  }
+
+  function countStatuses(entries) {
+    const c = Object.fromEntries(STATUSES.map((s) => [s.key, 0]));
+    for (const e of entries) c[e.status] = (c[e.status] || 0) + 1;
+    c.total = entries.length;
+    return c;
+  }
+  function latestByTestId(entries) {
+    const m = new Map();
+    for (const e of entries) {
+      const t = cleanTestId(e.testId); if (!t) continue;
+      const cur = m.get(t);
+      if (!cur || e.updatedAt > cur.updatedAt) m.set(t, e);
+    }
+    return m;
+  }
+  function coverage(catalog, entries) {
+    const latest = latestByTestId(entries);
+    const blank = () => ({ total: 0, tested: 0, pass: 0, issue: 0, blocker: 0, na: 0 });
+    const res = { all: blank(), p0: blank(), byDomain: {}, untestedP0: [], unknownIds: [] };
+    const known = new Set();
+    for (const t of catalog) {
+      known.add(t.id);
+      const d = res.byDomain[t.domain] || (res.byDomain[t.domain] = Object.assign(blank(), { p0total: 0, p0tested: 0 }));
+      const e = latest.get(t.id);
+      const tested = !!e && e.status !== 'notrun';
+      for (const bucket of t.pri === 'P0' ? [res.all, res.p0, d] : [res.all, d]) {
+        bucket.total++;
+        if (tested) { bucket.tested++; if (bucket[e.status] !== undefined) bucket[e.status]++; }
+      }
+      if (t.pri === 'P0') { d.p0total++; if (tested) d.p0tested++; else res.untestedP0.push(t); }
+    }
+    for (const id of latest.keys()) if (!known.has(id)) res.unknownIds.push(id);
+    const order = DOMAINS.map(([code]) => code);
+    const keys = Object.keys(res.byDomain).sort((a, b) => ((order.indexOf(a) + 1) || 99) - ((order.indexOf(b) + 1) || 99) || a.localeCompare(b));
+    res.byDomain = Object.fromEntries(keys.map((k) => [k, res.byDomain[k]]));
+    return res;
+  }
+
+  /* Report builders. Private notes are never read here. */
+  function selectEntries(tracker, opts) {
+    const o = opts || {};
+    const secs = tracker.project.sections.filter((s) => !o.sections || o.sections.includes(s.id));
+    const groups = secs.map((s) => ({ section: s, entries: tracker.entriesIn(s.id) }));
+    const orphans = tracker.orphanEntries();
+    if (orphans.length && (!o.sections || o.sections.includes('__unsorted'))) groups.push({ section: { id: '__unsorted', name: 'Unsorted' }, entries: orphans });
+    for (const g of groups) g.entries = g.entries.filter((e) => !o.statuses || o.statuses.includes(e.status));
+    return groups.filter((g) => g.entries.length);
+  }
+  const anchor = (e) => `entry-${e.id}`;
+  const statusBadge = (k) => { const s = STATUS[k] || STATUS.notrun; return `<span class="badge" style="color:${s.color}">${s.icon} ${escapeHTML(s.label)}</span>`; };
+  function barHTML(c) {
+    if (!c.total) return '<div class="bar"></div>';
+    return `<div class="bar">${STATUSES.filter((s) => c[s.key]).map((s) => `<span title="${escapeHTML(s.label)}: ${c[s.key]}" style="width:${(100 * c[s.key]) / c.total}%;background:${s.color}"></span>`).join('')}</div>`;
+  }
+  const textBlock = (label, text) => (String(text || '').trim()
+    ? `<div class="fld"><h4>${escapeHTML(label)}</h4><div class="txt">${escapeHTML(text)}</div></div>` : '');
+
+  async function buildReportHTML(tracker, opts, catalog) {
+    const o = Object.assign({ embedImages: true, includeLogs: true, logMaxKB: 64, title: tracker.project.reportTitle || tracker.project.title }, opts || {});
+    const groups = selectEntries(tracker, o);
+    const all = groups.flatMap((g) => g.entries);
+    const c = countStatuses(all);
+    const generated = new Date();
+    const cat = catalog && catalog.length ? coverage(catalog, all) : null;
+    const parts = [];
+    parts.push(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'">
+<title>${escapeHTML(o.title)}</title><style>${REPORT_CSS}</style></head><body><div class="doc">`);
+    parts.push(`<header class="cover"><h1>${escapeHTML(o.title)}</h1><p class="meta">Generated ${escapeHTML(fmtDate(generated.toISOString()))} · ${all.length} entries in ${groups.length} sections · private notes are excluded by design</p></header>`);
+    parts.push(`<section><h2>Summary</h2><div class="tiles">${STATUSES.map((s) => `<div class="tile"><div class="n" style="color:${s.color}">${c[s.key]}</div><div class="l">${s.icon} ${escapeHTML(s.label)}</div></div>`).join('')}</div>${barHTML(c)}
+<table><thead><tr><th>Section</th><th>Entries</th>${STATUSES.map((s) => `<th>${s.icon}</th>`).join('')}<th style="width:28%">Progress</th></tr></thead><tbody>
+${groups.map((g) => { const gc = countStatuses(g.entries); return `<tr><td><a href="#sec-${escapeHTML(g.section.id)}">${escapeHTML(g.section.name)}</a></td><td>${gc.total}</td>${STATUSES.map((s) => `<td>${gc[s.key] || ''}</td>`).join('')}<td>${barHTML(gc)}</td></tr>`; }).join('')}
+</tbody></table></section>`);
+    const flagged = all.filter((e) => e.status === 'blocker' || e.status === 'issue')
+      .sort((a, b) => (a.status === b.status ? a.updatedAt.localeCompare(b.updatedAt) : a.status === 'blocker' ? -1 : 1));
+    parts.push(`<section><h2>Blockers and issues</h2>${flagged.length ? `<ul class="flags">${flagged.map((e) => `<li>${statusBadge(e.status)} <a href="#${anchor(e)}">${escapeHTML(e.title || '(untitled)')}</a>${e.testId ? ` <span class="tid">${escapeHTML(e.testId)}</span>` : ''}</li>`).join('')}</ul>` : '<p class="muted">None recorded.</p>'}</section>`);
+    if (cat && cat.all.tested + cat.unknownIds.length > 0) {
+      const doms = Object.keys(cat.byDomain);
+      parts.push(`<section><h2>Test catalog coverage</h2><p>P0 tests with a result: <b>${cat.p0.tested} of ${cat.p0.total}</b> (🟩 ${cat.p0.pass} · 🟨 ${cat.p0.issue} · 🟥 ${cat.p0.blocker} · ⏭ ${cat.p0.na}). All catalog tests with a result: <b>${cat.all.tested} of ${cat.all.total}</b>. Based on the latest entry for each test ID.</p>
+<table><thead><tr><th>Domain</th><th>P0 with result</th><th>All with result</th><th>🟩</th><th>🟨</th><th>🟥</th><th>⏭</th></tr></thead><tbody>
+${doms.map((d) => { const x = cat.byDomain[d]; return `<tr><td>${escapeHTML(d)}</td><td>${x.p0tested} / ${x.p0total}</td><td>${x.tested} / ${x.total}</td><td>${x.pass || ''}</td><td>${x.issue || ''}</td><td>${x.blocker || ''}</td><td>${x.na || ''}</td></tr>`; }).join('')}
+</tbody></table>
+${cat.untestedP0.length ? `<details><summary>P0 tests without a result (${cat.untestedP0.length})</summary><ul class="cols">${cat.untestedP0.map((t) => `<li><span class="tid">${escapeHTML(t.id)}</span> ${escapeHTML(t.title)}</li>`).join('')}</ul></details>` : ''}
+${cat.unknownIds.length ? `<p class="muted">Test IDs not in the catalog: ${cat.unknownIds.map(escapeHTML).join(', ')}</p>` : ''}</section>`);
+    }
+    parts.push(`<nav class="toc"><h2>Contents</h2><ol>${groups.map((g) => `<li><a href="#sec-${escapeHTML(g.section.id)}">${escapeHTML(g.section.name)}</a> <span class="muted">(${g.entries.length})</span></li>`).join('')}</ol></nav>`);
+    const catById = new Map((catalog || []).map((t) => [t.id, t]));
+    for (const g of groups) {
+      parts.push(`<section class="sec" id="sec-${escapeHTML(g.section.id)}"><h2>${escapeHTML(g.section.name)}</h2>`);
+      for (const e of g.entries) {
+        const s = STATUS[e.status] || STATUS.notrun;
+        const ct = catById.get(cleanTestId(e.testId));
+        const env = ENV_FIELDS.filter((f) => String(e.env[f.key] || '').trim());
+        parts.push(`<article class="entry" id="${anchor(e)}" style="border-left-color:${s.color}"><h3>${escapeHTML(e.title || '(untitled)')}</h3>
+<p class="meta">${statusBadge(e.status)}${e.testId ? ` <span class="tid">${escapeHTML(e.testId)}</span>` : ''}${ct ? ` <span class="muted">${escapeHTML(ct.pri)} · ${escapeHTML(ct.title)}</span>` : ''}<br><span class="muted">Created ${escapeHTML(fmtDate(e.createdAt))} · Updated ${escapeHTML(fmtDate(e.updatedAt))}</span></p>
+${env.length ? `<table class="env"><tbody>${env.map((f) => `<tr><th>${escapeHTML(f.label)}</th><td>${escapeHTML(e.env[f.key])}</td></tr>`).join('')}</tbody></table>` : ''}
+${TEXT_FIELDS.map((f) => textBlock(f.label, e[f.key])).join('')}`);
+        if (e.attachments.length) {
+          const items = [];
+          for (const a of e.attachments) {
+            let body = '';
+            try {
+              if (isImage(a) && o.embedImages) {
+                const f = await tracker.readAttachment(a);
+                body = `<img alt="${escapeHTML(a.caption || a.name)}" src="data:${escapeHTML(a.type || 'image/png')};base64,${await toBase64(f)}">`;
+              } else if (isText(a) && o.includeLogs) {
+                const f = await tracker.readAttachment(a);
+                const max = o.logMaxKB * 1024;
+                let t = await f.slice(0, max).text();
+                if (f.size > max) t += `\n… truncated (${fmtBytes(f.size)} total)`;
+                body = `<pre>${escapeHTML(t)}</pre>`;
+              }
+            } catch (err) { body = `<p class="muted">Couldn't read this file: ${escapeHTML(err.message)}</p>`; }
+            items.push(`<figure>${body}<figcaption><b>${escapeHTML(a.caption || a.name)}</b> <span class="muted">· ${escapeHTML(a.path)} · ${escapeHTML(fmtBytes(a.size))}</span></figcaption></figure>`);
+          }
+          parts.push(`<div class="fld"><h4>Attachments (${e.attachments.length})</h4>${items.join('')}</div>`);
+        }
+        parts.push('</article>');
+      }
+      parts.push('</section>');
+    }
+    parts.push(`<footer><p class="muted">Built by the evaluation test tracker. Private notes are never included in reports.</p></footer></div></body></html>`);
+    return parts.join('\n');
+  }
+
+  /* Markdown output: neutralise raw HTML outside code so pasted payloads can't run in a converted document. */
+  function mdSafe(text) {
+    let fence = false;
+    return String(text ?? '').split('\n').map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) { fence = !fence; return line; }
+      if (fence) return line;
+      return line.split(/(`[^`]*`)/).map((part, i) => (i % 2 ? part : part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))).join('');
+    }).join('\n');
+  }
+  const mdLine = (s) => mdSafe(String(s ?? '').replace(/\s*\n\s*/g, ' '));
+
+  function buildReportMarkdown(tracker, opts, catalog) {
+    const o = Object.assign({ title: tracker.project.reportTitle || tracker.project.title, linkPrefix: '../' }, opts || {});
+    const groups = selectEntries(tracker, o);
+    const all = groups.flatMap((g) => g.entries);
+    const c = countStatuses(all);
+    const catById = new Map((catalog || []).map((t) => [t.id, t]));
+    const L = [];
+    L.push(`# ${mdLine(o.title)}`, '', `_Generated ${fmtDate(new Date().toISOString())}. ${all.length} entries in ${groups.length} sections. Private notes are excluded by design._`, '');
+    L.push('## Summary', '', `| Section | Entries | ${STATUSES.map((s) => s.icon).join(' | ')} |`, `|---|---|${STATUSES.map(() => '---').join('|')}|`);
+    for (const g of groups) { const gc = countStatuses(g.entries); L.push(`| ${mdLine(g.section.name).replace(/\|/g, '\\|')} | ${gc.total} | ${STATUSES.map((s) => gc[s.key] || '').join(' | ')} |`); }
+    L.push(`| **Total** | **${c.total}** | ${STATUSES.map((s) => `**${c[s.key]}**`).join(' | ')} |`, '');
+    const flagged = all.filter((e) => e.status === 'blocker' || e.status === 'issue');
+    L.push('## Blockers and issues', '');
+    if (flagged.length) for (const e of flagged) L.push(`- ${STATUS[e.status].icon} ${STATUS[e.status].label}: ${mdLine(e.title || '(untitled)')}${e.testId ? ` (${e.testId})` : ''}`);
+    else L.push('None recorded.');
+    L.push('');
+    for (const g of groups) {
+      L.push(`## ${mdLine(g.section.name)}`, '');
+      for (const e of g.entries) {
+        const s = STATUS[e.status] || STATUS.notrun;
+        const ct = catById.get(cleanTestId(e.testId));
+        L.push(`### ${s.icon} ${mdLine(e.title || '(untitled)')}${e.testId ? ` · ${e.testId}` : ''}`, '');
+        L.push(`**Status:** ${s.icon} ${s.label}${ct ? ` · **Catalog:** ${ct.pri}, ${ct.title}` : ''} · **Updated:** ${fmtDate(e.updatedAt)}`, '');
+        const env = ENV_FIELDS.filter((f) => String(e.env[f.key] || '').trim());
+        if (env.length) L.push(env.map((f) => `**${f.label}:** \`${String(e.env[f.key]).replace(/`/g, "'").replace(/\s+/g, ' ')}\``).join(' · '), '');
+        for (const f of TEXT_FIELDS) if (String(e[f.key] || '').trim()) L.push(`#### ${f.label}`, '', mdSafe(String(e[f.key]).trim()), '');
+        if (e.attachments.length) {
+          L.push('#### Attachments', '');
+          for (const a of e.attachments) {
+            const href = encodeURI(o.linkPrefix + a.path);
+            L.push(isImage(a) ? `![${mdLine(a.caption || a.name).replace(/[[\]]/g, '')}](${href})` : `- [${a.name}](${href}) (${fmtBytes(a.size)})${a.caption ? `: ${mdLine(a.caption)}` : ''}`);
+            L.push('');
+          }
+        }
+      }
+    }
+    return L.join('\n');
+  }
+
+  const REPORT_CSS = `body{margin:0;background:#fff;color:#0f172a;font:14px/1.5 "Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif}
+.doc{max-width:960px;margin:0 auto;padding:32px 28px 64px}h1{font-size:26px;margin:0}h2{font-size:18px;margin:32px 0 10px;border-bottom:2px solid #e2e8f0;padding-bottom:4px}
+h3{font-size:16px;margin:0 0 4px}h4{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#475569;margin:12px 0 4px}
+.meta{color:#475569;margin:4px 0 8px}.muted{color:#64748b}a{color:#1d4ed8}
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:8px 0 10px}.tile{border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px}.tile .n{font-size:22px;font-weight:700}.tile .l{font-size:12px;color:#475569}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:#eef2f7;margin:4px 0 12px}.bar span{display:block;height:100%}
+table{width:100%;border-collapse:collapse;margin:8px 0}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}th{background:#f8fafc;font-size:12px;color:#475569}
+table.env{width:auto;font-size:12px}table.env th{background:none}
+.badge{display:inline-block;font-weight:600;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.tid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:0 6px}
+.entry{border:1px solid #e2e8f0;border-left:5px solid #64748b;border-radius:8px;padding:14px 16px;margin:12px 0;break-inside:avoid-page}
+.txt{white-space:pre-wrap;word-break:break-word}
+pre{white-space:pre-wrap;word-break:break-word;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;max-height:420px;overflow:auto}
+figure{margin:10px 0}figure img{max-width:100%;border:1px solid #e2e8f0;border-radius:6px}figcaption{font-size:12px;margin-top:4px}
+ul.flags{padding-left:18px}ul.cols{columns:2;font-size:12px}
+@media print{.doc{padding:0}pre{max-height:none;overflow:visible}a{color:inherit;text-decoration:none}h2{break-after:avoid}details{display:block}}`;
+
+  /* Full backup: includes private notes and every attachment. */
+  async function exportBackup(tracker) {
+    await tracker.idle();
+    const files = {};
+    for (const e of tracker.allEntries()) for (const a of e.attachments) {
+      try { files[a.path] = await toBase64(await tracker.readAttachment(a)); } catch (err) { /* missing file: skip */ }
+    }
+    return JSON.stringify({ format: 'evaluation-tracker-backup', schema: SCHEMA, exportedAt: new Date().toISOString(),
+      project: tracker.project, entries: tracker.allEntries(), files }, null, 1);
+  }
+  async function importBackup(tracker, text) {
+    const b = JSON.parse(text);
+    if (!b || b.format !== 'evaluation-tracker-backup') throw new Error('This file is not a tracker backup.');
+    const have = new Set(tracker.project.sections.map((s) => s.id));
+    for (const s of (b.project && b.project.sections) || []) if (!have.has(s.id)) tracker.project.sections.push(s);
+    await tracker.saveProject();
+    let nFiles = 0;
+    for (const [path, b64] of Object.entries(b.files || {})) {
+      if (path.includes('..') || path.startsWith('/')) continue;
+      await tracker.store.writeFile(path, new Blob([fromBase64(b64)])); nFiles++;
+    }
+    for (const raw of b.entries || []) { const e = normalizeEntry(raw); tracker.entries.set(e.id, e); await tracker.saveEntry(e, false); }
+    return { entries: (b.entries || []).length, files: nFiles };
+  }
+
+  /* Self-test against a scratch folder inside the given directory handle (normally browser storage). */
+  async function runSelfTest(rootHandle) {
+    const results = [];
+    const tmpName = `__tracker-selftest-${rand(6)}`;
+    const check = async (name, fn) => {
+      try { const detail = await fn(); results.push({ name, ok: true, detail: detail || '' }); }
+      catch (err) { results.push({ name, ok: false, detail: err && err.message ? err.message : String(err) }); }
+    };
+    const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+    let tmp;
+    await check('Create a scratch folder', async () => { tmp = await rootHandle.getDirectoryHandle(tmpName, { create: true }); });
+    if (!tmp) return results;
+    const t = new Tracker(new Store(tmp, 'self-test'));
+    let e;
+    const canary = `PRIVATE-CANARY-${rand(8)}`;
+    await check('Create a project and a section', async () => { await t.load(); await t.addSection('Self-test'); assert(await t.store.exists('tracker.json'), 'tracker.json missing'); });
+    await check('Save an entry', async () => {
+      e = await t.newEntry(t.project.sections[0].id, { title: 'Self-test <entry> & "quotes"', status: 'issue', result: 'Line one\n<script>alert(1)<\/script>', privateNotes: canary });
+      assert(await t.store.exists(`entries/${e.id}.json`), 'entry file missing');
+    });
+    await check('Attach a screenshot and a log', async () => {
+      const png = new Blob([fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')], { type: 'image/png' });
+      await t.addAttachment(e, png, { name: 'screenshot.png' });
+      await t.addAttachment(e, new Blob(['hello log\n'], { type: 'text/plain' }), { name: 'output.log' });
+      assert(e.attachments.length === 2, 'expected 2 attachments');
+    });
+    await check('Move attachments when a test ID is added', async () => {
+      await t.setTestId(e, 'zz-999');
+      assert(e.attachments.every((a) => a.path.startsWith('evidence/ZZ-999/')), 'attachments not moved');
+      assert(await t.store.exists(e.attachments[0].path), 'moved file missing');
+    });
+    await check('Reload from storage', async () => {
+      await t.idle();
+      const t2 = await new Tracker(t.store).load();
+      const e2 = t2.entries.get(e.id);
+      assert(e2 && e2.title === e.title && e2.attachments.length === 2, 'reloaded entry differs');
+    });
+    await check('Report leaves out private notes and escapes text', async () => {
+      const html = await buildReportHTML(t, {}, []);
+      assert(!html.includes(canary), 'private note leaked into the HTML report');
+      assert(!html.includes('<script>alert(1)'), 'unescaped text in the report');
+      assert(html.includes('data:image/png;base64,'), 'screenshot not embedded');
+      const md = buildReportMarkdown(t, {}, []);
+      assert(!md.includes(canary), 'private note leaked into the Markdown report');
+    });
+    await check('Backup and restore', async () => {
+      const text = await exportBackup(t);
+      const sub = await tmp.getDirectoryHandle('restore', { create: true });
+      const t3 = await new Tracker(new Store(sub, 'restore')).load();
+      const r = await importBackup(t3, text);
+      assert(r.entries === 1 && r.files === 2, `restored ${r.entries} entries, ${r.files} files`);
+    });
+    await check('Delete an entry and its files', async () => {
+      const paths = e.attachments.map((a) => a.path);
+      await t.deleteEntry(e.id);
+      for (const p of paths) assert(!(await t.store.exists(p)), `file left behind: ${p}`);
+    });
+    await check('Clean up', async () => { await rootHandle.removeEntry(tmpName, { recursive: true }); });
+    return results;
+  }
+
+  global.TrackerCore = { SCHEMA, STATUSES, STATUS, TEXT_FIELDS, ENV_FIELDS, DOMAINS, Store, Tracker, normalizeEntry,
+    newProject, countStatuses, coverage, latestByTestId, buildReportHTML, buildReportMarkdown, exportBackup, importBackup,
+    runSelfTest, escapeHTML, mdSafe, slugify, cleanTestId, extOf, stemOf, isImage, isText, fmtBytes, fmtDate, dateStamp, timeStamp,
+    toBase64, fromBase64, newId };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<script id="ui">
+(function () {
+  'use strict';
+  const C = window.TrackerCore;
+  const { STATUSES, STATUS, TEXT_FIELDS, ENV_FIELDS, escapeHTML: esc } = C;
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => [...(root || document).querySelectorAll(sel)];
+  const app = $('#app');
+  let CATALOG = [];
+  try { CATALOG = JSON.parse($('#catalog-data').textContent || '[]'); } catch (e) { CATALOG = []; }
+  const CAT = new Map(CATALOG.map((t) => [t.id, t]));
+
+  let T = null;
+  let storage = null; // { kind: 'folder' | 'opfs', name }
+  let pendingHandle = null;
+  let view = { kind: 'dashboard' };
+  const filters = { statuses: new Set(), q: '' };
+  const timers = new Map();
+  const saveState = { pending: 0, last: null, error: null };
+  let urls = [];
+
+  /* ---------- small helpers ---------- */
+  const IDB = {
+    db: null,
+    open() {
+      if (this.db) return Promise.resolve(this.db);
+      return new Promise((res, rej) => {
+        const r = indexedDB.open('evaluation-tracker', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => { this.db = r.result; res(r.result); };
+        r.onerror = () => rej(r.error);
+      });
+    },
+    async op(mode, fn) {
+      const db = await this.open();
+      return new Promise((res, rej) => {
+        const req = fn(db.transaction('kv', mode).objectStore('kv'));
+        req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+      });
+    },
+    get(k) { return this.op('readonly', (s) => s.get(k)); },
+    set(k, v) { return this.op('readwrite', (s) => s.put(v, k)); },
+    del(k) { return this.op('readwrite', (s) => s.delete(k)); },
+  };
+  function toast(msg, isErr) {
+    const el = document.createElement('div');
+    el.className = `toast${isErr ? ' err' : ''}`; el.textContent = msg;
+    $('#toasts').appendChild(el);
+    setTimeout(() => el.remove(), isErr ? 7000 : 3200);
+  }
+  function blobUrl(blob) { const u = URL.createObjectURL(blob); urls.push(u); return u; }
+  function freeUrls() { urls.forEach((u) => URL.revokeObjectURL(u)); urls = []; }
+  function download(name, blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  }
+  function modal({ title, body, buttons, wide }) {
+    const btns = buttons || [{ label: 'Close', value: null, kind: 'primary' }];
+    return new Promise((resolve) => {
+      const back = document.createElement('div');
+      back.className = 'modal-back';
+      back.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header>${esc(title)}</header><div class="body">${body || ''}</div><footer>${btns.map((b, i) => `<button class="btn ${b.kind || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</footer></div>`;
+      const close = (v) => { back.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+      const onKey = (ev) => {
+        if (ev.key === 'Escape') { ev.stopPropagation(); close(null); return; }
+        if (ev.key === 'Enter' && ev.target.matches('.modal input[type=text]')) {
+          const primary = back.querySelector('footer .primary');
+          if (primary) { ev.preventDefault(); primary.click(); }
+        }
+      };
+      document.addEventListener('keydown', onKey, true);
+      back.addEventListener('click', (ev) => {
+        if (ev.target === back) return close(null);
+        const b = ev.target.closest('footer button');
+        if (!b) return;
+        const def = btns[+b.dataset.i];
+        const v = typeof def.value === 'function' ? def.value(back) : def.value;
+        if (v !== undefined) close(v);
+      });
+      document.body.appendChild(back);
+      const first = back.querySelector('input, select, textarea') || back.querySelector('footer .primary');
+      if (first) first.focus();
+    });
+  }
+  const confirmBox = (title, text, okLabel, danger) => modal({ title, body: `<p>${esc(text)}</p>`,
+    buttons: [{ label: 'Cancel', value: false }, { label: okLabel || 'OK', value: true, kind: danger ? 'primary danger' : 'primary' }] });
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const statusColor = (k) => (STATUS[k] || STATUS.notrun).color;
+  function bar(c, cls) {
+    if (!c.total) return `<div class="${cls || 'bar'}"></div>`;
+    return `<div class="${cls || 'bar'}">${STATUSES.filter((s) => c[s.key]).map((s) => `<span title="${esc(s.label)}: ${c[s.key]}" style="width:${(100 * c[s.key]) / c.total}%;background:${s.color}"></span>`).join('')}</div>`;
+  }
+  const matchFilters = (e) => !filters.statuses.size || filters.statuses.has(e.status);
+  function currentEntry() { return view.kind === 'entry' ? T.entries.get(view.id) : null; }
+
+  /* ---------- saving ---------- */
+  function updateSaveIndicator() {
+    const el = $('#save-ind'); if (!el) return;
+    el.classList.toggle('err', !!saveState.error);
+    el.textContent = saveState.error ? `Save failed: ${saveState.error}` : saveState.pending || timers.size ? 'Saving…'
+      : saveState.last ? `Saved ${saveState.last.toLocaleTimeString()}` : '';
+  }
+  async function doSave(e) {
+    timers.delete(e.id);
+    saveState.pending++; updateSaveIndicator();
+    try { await T.saveEntry(e); saveState.error = null; saveState.last = new Date(); }
+    catch (err) { saveState.error = err.message; toast(`Couldn't save: ${err.message}`, true); }
+    finally { saveState.pending--; updateSaveIndicator(); }
+    const upd = $('#upd'); if (upd && view.id === e.id) upd.textContent = C.fmtDate(e.updatedAt);
+  }
+  function scheduleSave(e) {
+    clearTimeout(timers.get(e.id));
+    timers.set(e.id, setTimeout(() => doSave(e), 450));
+    updateSaveIndicator();
+  }
+  async function flushSaves() {
+    const ids = [...timers.keys()];
+    for (const id of ids) { clearTimeout(timers.get(id)); const e = T && T.entries.get(id); if (e) await doSave(e); else timers.delete(id); }
+    if (T) await T.idle();
+  }
+  window.addEventListener('beforeunload', (ev) => { if (timers.size || saveState.pending) { ev.preventDefault(); ev.returnValue = ''; } });
+
+  /* ---------- storage ---------- */
+  const supportsFolder = typeof window.showDirectoryPicker === 'function';
+  async function openStore(handle, info) {
+    const t = new C.Tracker(new C.Store(handle, info.name));
+    await t.load();
+    T = t; storage = info; view = { kind: 'dashboard' };
+    render();
+    if (t.loadErrors.length) toast(`Some entries couldn't be read: ${t.loadErrors.join('; ')}`, true);
+  }
+  async function chooseFolder() {
+    let handle;
+    try { handle = await window.showDirectoryPicker({ id: 'evaluation-records', mode: 'readwrite' }); }
+    catch (err) { if (err.name !== 'AbortError') toast(`Folder access failed: ${err.message}`, true); return; }
+    const names = new Set();
+    for await (const [n] of handle.entries()) names.add(n);
+    if (names.has('.devcontainer') || names.has('.claude') || names.has('.mcp.json')) {
+      const ok = await confirmBox('This looks like a code repo', 'Records must stay outside anything the agent under test can reach. This folder contains Claude Code or dev-container files, so the agent may be able to read it. Use it anyway?', 'Use anyway', true);
+      if (!ok) return;
+    }
+    await IDB.set('storage', { kind: 'folder', handle });
+    await openStore(handle, { kind: 'folder', name: handle.name });
+  }
+  async function reconnect() {
+    if (!pendingHandle) return;
+    const p = await pendingHandle.requestPermission({ mode: 'readwrite' });
+    if (p !== 'granted') { toast('Permission was not granted.', true); return; }
+    const h = pendingHandle; pendingHandle = null;
+    await openStore(h, { kind: 'folder', name: h.name });
+  }
+  async function useBrowserStorage() {
+    if (!navigator.storage || !navigator.storage.getDirectory) { toast('Browser storage isn\'t available in this browser.', true); return; }
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle('evaluation-tracker', { create: true });
+    try { if (navigator.storage.persist) await navigator.storage.persist(); } catch (e) { /* optional */ }
+    await IDB.set('storage', { kind: 'opfs' });
+    await openStore(dir, { kind: 'opfs', name: 'Browser storage' });
+  }
+  async function switchStorage() {
+    await flushSaves();
+    T = null; storage = null; pendingHandle = null; freeUrls();
+    try { await IDB.del('storage'); } catch (e) { /* ignore */ }
+    render();
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    freeUrls();
+    if (!T) { renderWelcome(); return; }
+    if (!$('.shell')) app.innerHTML = '<div class="shell"><aside id="sidebar"></aside><main id="main"></main></div>';
+    renderSidebar(); renderMain();
+  }
+  function renderWelcome() {
+    app.innerHTML = `<div class="welcome">
+<h1>Evaluation test tracker</h1>
+<p class="sub">Record each step as you go: what you did, the result, any fix steps, notes, screenshots, and logs. Mark it 🟩 Pass, 🟨 Issue, or 🟥 Blocker, and build one report at the end. Private notes never leave the records folder.</p>
+<div class="wcards">
+  <div class="card"><h3>📁 Records folder (recommended)</h3>
+    <p>Saves everything as ordinary files in a folder you choose, so git can version it. Keep the folder outside anything the agent under test can reach.</p>
+    ${pendingHandle ? `<button class="btn primary" data-action="reconnect">Reconnect to “${esc(pendingHandle.name)}”</button>` : ''}
+    <button class="btn ${pendingHandle ? '' : 'primary'}" data-action="choose-folder" ${supportsFolder ? '' : 'disabled'}>Choose records folder…</button>
+    ${supportsFolder ? '' : '<div class="warn">This browser can\'t open folders. Use Microsoft Edge or Google Chrome, or use browser storage.</div>'}
+  </div>
+  <div class="card"><h3>🗄 Browser storage</h3>
+    <p>Keeps records inside this browser profile only. Use it if folder access is blocked. Export a backup regularly: non-persistent VDI profiles are wiped at sign-out.</p>
+    <button class="btn" data-action="use-browser-storage">Use browser storage</button>
+  </div>
+</div>
+<p><button class="btn ghost" data-action="run-selftest">Run self-test</button> <span class="hint">Checks that this browser supports everything the tracker needs.</span></p>
+<p class="hint">This page makes no network requests. Everything stays on this machine.</p>
+</div>`;
+  }
+  function sectionCounts() {
+    const m = new Map();
+    for (const s of T.project.sections) m.set(s.id, C.countStatuses(T.entriesIn(s.id)));
+    return m;
+  }
+  function renderSidebar() {
+    const all = T.allEntries(); const tot = C.countStatuses(all); const sc = sectionCounts();
+    const orphans = T.orphanEntries();
+    const active = (k, id) => (view.kind === k && (!id || view.id === id) ? ' active' : '');
+    $('#sidebar').innerHTML = `
+<div class="brand"><div class="brand-title">${esc(T.project.title)}</div><div class="brand-sub">Test tracker · ${plural(all.length, 'entry', 'entries')}</div></div>
+<div class="side-actions"><button class="btn primary block" data-action="new-entry" title="Alt+N">+ New entry</button></div>
+<div class="search"><input id="search" type="search" placeholder="Search entries (Ctrl+K)" value="${esc(filters.q)}" aria-label="Search entries"></div>
+<div class="chips">${STATUSES.map((s) => `<button class="chip${filters.statuses.has(s.key) ? ' on' : ''}" data-action="toggle-status" data-status="${s.key}" title="Filter: ${esc(s.label)}">${s.icon} ${tot[s.key]}</button>`).join('')}</div>
+<nav>
+  <div class="nav-item${active('dashboard')}" data-action="open-dashboard"><span class="name">📊 Dashboard</span></div>
+  <div class="nav-head"><span>Sections</span><button class="icon-btn" data-action="add-section" title="Add section" aria-label="Add section">＋</button></div>
+  ${T.project.sections.map((s) => { const c = sc.get(s.id); return `<div class="nav-sec"><div class="nav-item${active('section', s.id)}" data-action="open-section" data-id="${esc(s.id)}"><span class="name">${esc(s.name)}</span><span class="count">${c.total}</span></div>${c.total ? bar(c, 'minibar') : ''}</div>`; }).join('')}
+  ${orphans.length ? `<div class="nav-item${active('section', '__unsorted')}" data-action="open-section" data-id="__unsorted"><span class="name">Unsorted</span><span class="count">${orphans.length}</span></div>` : ''}
+  ${T.project.sections.length ? '' : '<p class="hint" style="padding:6px 8px">No sections yet. Add one with ＋, or add the standard test-catalog sections from Settings.</p>'}
+</nav>
+<div class="side-foot">
+  <div class="storage" title="${esc(storage.name)}">${storage.kind === 'folder' ? '📁' : '🗄'} ${esc(storage.kind === 'folder' ? `Folder: ${storage.name}` : 'Browser storage (this browser only)')}</div>
+  <div class="foot-actions"><button class="btn" data-action="build-report">Build report</button><button class="btn ghost" data-action="open-settings">Settings</button></div>
+</div>`;
+  }
+  function renderMain() {
+    const main = $('#main');
+    if (filters.q.trim() && view.kind !== 'entry') return renderSearch(main);
+    if (view.kind === 'section') return renderSection(main);
+    if (view.kind === 'entry') return renderEntry(main);
+    return renderDashboard(main);
+  }
+  function entryRow(e, showSection) {
+    const s = STATUS[e.status] || STATUS.notrun;
+    const sec = T.section(e.sectionId);
+    return `<div class="row" data-action="open-entry" data-id="${esc(e.id)}" role="button" tabindex="0">
+<span class="sq" style="background:${s.color}" title="${esc(s.label)}"></span>
+<div class="t"><div class="title">${esc(e.title || '(untitled)')}</div><div class="meta">${s.icon} ${esc(s.label)} · updated ${esc(C.fmtDate(e.updatedAt))}${showSection && sec ? ` · ${esc(sec.name)}` : ''}${e.attachments.length ? ` · 📎 ${e.attachments.length}` : ''}${String(e.privateNotes || '').trim() ? ' · 🔒' : ''}</div></div>
+${e.testId ? `<span class="tid">${esc(e.testId)}</span>` : ''}</div>`;
+  }
+  function renderDashboard(main) {
+    const all = T.allEntries(); const c = C.countStatuses(all); const sc = sectionCounts();
+    const flagged = all.filter((e) => e.status === 'blocker' || e.status === 'issue').filter(matchFilters)
+      .sort((a, b) => (a.status === b.status ? b.updatedAt.localeCompare(a.updatedAt) : a.status === 'blocker' ? -1 : 1));
+    const recent = all.filter(matchFilters).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 8);
+    const cov = CATALOG.length ? C.coverage(CATALOG, all) : null;
+    main.innerHTML = `<div class="page">
+<h1>Dashboard</h1><p class="sub">${plural(all.length, 'entry', 'entries')} across ${plural(T.project.sections.length, 'section', 'sections')}.</p>
+<div class="tiles">${STATUSES.map((s) => `<div class="tile"><div class="n" style="color:${s.color}">${c[s.key]}</div><div class="l">${s.icon} ${esc(s.label)}</div></div>`).join('')}</div>
+<div style="margin:10px 0 0">${bar(c)}</div>
+<h2>Blockers and issues</h2>
+${flagged.length ? `<div class="list">${flagged.map((e) => entryRow(e, true)).join('')}</div>` : '<div class="empty">No blockers or issues recorded.</div>'}
+<h2>Sections</h2>
+${T.project.sections.length ? `<table class="grid"><thead><tr><th>Section</th><th>Entries</th>${STATUSES.map((s) => `<th title="${esc(s.label)}">${s.icon}</th>`).join('')}<th style="width:30%">Progress</th></tr></thead><tbody>
+${T.project.sections.map((s) => { const x = sc.get(s.id); return `<tr><td><a href="#" data-action="open-section" data-id="${esc(s.id)}">${esc(s.name)}</a></td><td>${x.total}</td>${STATUSES.map((st) => `<td>${x[st.key] || ''}</td>`).join('')}<td>${bar(x)}</td></tr>`; }).join('')}
+</tbody></table>` : '<div class="empty">Add a section to start. Use ＋ in the sidebar, or Settings → Add standard sections.</div>'}
+${cov ? `<h2>Test catalog coverage</h2>
+<p class="sub">P0 tests with a result: <b>${cov.p0.tested} of ${cov.p0.total}</b> · all catalog tests: <b>${cov.all.tested} of ${cov.all.total}</b>. Uses the latest entry for each test ID.</p>
+<table class="grid"><thead><tr><th>Domain</th><th>P0 with result</th><th>All with result</th><th>🟩</th><th>🟨</th><th>🟥</th></tr></thead><tbody>
+${Object.entries(cov.byDomain).map(([d, x]) => `<tr><td>${esc(d)}</td><td>${x.p0tested} / ${x.p0total}</td><td>${x.tested} / ${x.total}</td><td>${x.pass || ''}</td><td>${x.issue || ''}</td><td>${x.blocker || ''}</td></tr>`).join('')}
+</tbody></table>` : ''}
+<h2>Recent activity</h2>
+${recent.length ? `<div class="list">${recent.map((e) => entryRow(e, true)).join('')}</div>` : '<div class="empty">Nothing yet. Click “+ New entry” to record your first step.</div>'}
+</div>`;
+  }
+  function renderSection(main) {
+    const id = view.id; const isUnsorted = id === '__unsorted';
+    const s = isUnsorted ? { id, name: 'Unsorted' } : T.section(id);
+    if (!s) { view = { kind: 'dashboard' }; return renderDashboard(main); }
+    const list = (isUnsorted ? T.orphanEntries() : T.entriesIn(id));
+    const shown = list.filter(matchFilters);
+    const c = C.countStatuses(list);
+    main.innerHTML = `<div class="page">
+<div class="toolbar"><div class="sec-head"><h1 id="sec-title">${esc(s.name)}</h1></div><div class="spacer"></div>
+${isUnsorted ? '' : `<button class="btn ghost" data-action="rename-section" title="Rename">Rename</button>
+<button class="icon-btn" data-action="move-section" data-delta="-1" title="Move up" aria-label="Move section up">▲</button>
+<button class="icon-btn" data-action="move-section" data-delta="1" title="Move down" aria-label="Move section down">▼</button>
+<button class="btn ghost danger" data-action="delete-section">Delete section</button>`}
+<button class="btn primary" data-action="new-entry">+ New entry</button></div>
+<p class="sub">${plural(list.length, 'entry', 'entries')}${filters.statuses.size ? ` · ${shown.length} match the status filter` : ''}</p>
+${c.total ? `<div style="margin-bottom:14px">${bar(c)}</div>` : ''}
+${shown.length ? `<div class="list">${shown.map((e) => entryRow(e, false)).join('')}</div>` : `<div class="empty">${list.length ? 'No entries match the status filter.' : 'No entries yet. Click “+ New entry” to record a step.'}</div>`}
+</div>`;
+  }
+  function renderSearch(main) {
+    const q = filters.q.trim().toLowerCase();
+    const hits = T.allEntries().filter(matchFilters).filter((e) => [e.title, e.testId, e.whatIDid, e.result, e.fixSteps, e.notes, e.privateNotes,
+      ...e.attachments.map((a) => `${a.name} ${a.caption}`)].join('\n').toLowerCase().includes(q))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    main.innerHTML = `<div class="page"><h1>Search</h1><p class="sub">${hits.length === 1 ? '1 entry matches' : `${hits.length} entries match`} “${esc(filters.q)}”. Private notes are searched too.</p>
+${hits.length ? `<div class="list">${hits.map((e) => entryRow(e, true)).join('')}</div>` : '<div class="empty">No matches.</div>'}</div>`;
+  }
+  function attachmentCard(a) {
+    const icon = C.isImage(a) ? '🖼' : C.isText(a) ? '📄' : '📦';
+    return `<div class="att" data-att="${esc(a.id)}">
+<div class="thumb" data-action="view-attachment" data-id="${esc(a.id)}" title="Open">${C.isImage(a) ? `<img alt="" data-img="${esc(a.id)}">` : icon}</div>
+<div class="info"><div class="fname">${esc(a.name)} <span class="hint">· ${esc(C.fmtBytes(a.size))}</span></div>
+<input type="text" placeholder="Caption" value="${esc(a.caption || '')}" data-caption="${esc(a.id)}" aria-label="Caption for ${esc(a.name)}">
+<div class="acts"><button class="mini" data-action="view-attachment" data-id="${esc(a.id)}">View</button><button class="mini" data-action="download-attachment" data-id="${esc(a.id)}">Download</button><button class="mini" data-action="remove-attachment" data-id="${esc(a.id)}">Remove</button></div></div></div>`;
+  }
+  function catHint(testId) {
+    const t = CAT.get(C.cleanTestId(testId));
+    return t ? `${esc(t.pri)} · ${esc(t.title)}` : (testId ? 'Not in the test catalog' : 'Optional. Links this entry to a catalog test.');
+  }
+  function renderEntry(main) {
+    const e = T.entries.get(view.id);
+    if (!e) { view = { kind: 'dashboard' }; return renderDashboard(main); }
+    const sec = T.section(e.sectionId);
+    const hasEnv = ENV_FIELDS.some((f) => String(e.env[f.key] || '').trim());
+    main.innerHTML = `<div class="page editor" data-entry="${esc(e.id)}">
+<div class="top"><button class="btn ghost" data-action="back">← ${esc(sec ? sec.name : 'Back')}</button><span class="save-ind" id="save-ind"></span><div class="spacer"></div><button class="btn ghost danger" data-action="delete-entry">Delete entry</button></div>
+<input class="title-input" id="f-title" placeholder="What are you testing? (title)" value="${esc(e.title)}" aria-label="Title">
+<div class="meta-row">
+  <label>Section<select id="f-section">${T.project.sections.map((s) => `<option value="${esc(s.id)}" ${s.id === e.sectionId ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}${sec ? '' : '<option value="" selected>Unsorted</option>'}</select></label>
+  <label>Test ID<input id="f-testId" list="catalog-ids" placeholder="e.g. ENV-001" value="${esc(e.testId)}" autocomplete="off"></label>
+  <span class="cat-hint" id="cat-hint">${catHint(e.testId)}</span>
+</div>
+<div class="status-row" role="group" aria-label="Status">${STATUSES.map((s) => `<button class="status-btn${e.status === s.key ? ' on' : ''}" data-action="set-status" data-status="${s.key}" style="--c:${s.color}" aria-pressed="${e.status === s.key}">${s.icon} ${esc(s.label)}</button>`).join('')}</div>
+<div class="dates">Created ${esc(C.fmtDate(e.createdAt))} · Updated <span id="upd">${esc(C.fmtDate(e.updatedAt))}</span></div>
+${TEXT_FIELDS.map((f) => `<div class="field"><div class="field-head"><label for="f-${f.key}">${esc(f.label)}</label>${f.key === 'fixSteps' ? '<button class="mini" data-action="add-timestamp">+ Timestamped step</button>' : ''}</div><textarea id="f-${f.key}" data-field="${f.key}" rows="${f.key === 'whatIDid' || f.key === 'result' ? 5 : 3}">${esc(e[f.key])}</textarea></div>`).join('')}
+<details class="env"${hasEnv ? ' open' : ''}><summary>Environment (tester, version, image, policy)</summary><div class="env-grid">${ENV_FIELDS.map((f) => `<label>${esc(f.label)}<input type="text" data-env="${f.key}" value="${esc(e.env[f.key] || '')}"></label>`).join('')}</div></details>
+<div class="field"><div class="field-head"><label>Attachments</label><button class="mini" data-action="pick-files">Add files…</button></div>
+<div class="dropzone" id="dropzone">Drop screenshots or log files here, or paste a screenshot with Ctrl+V</div>
+<div class="att-grid">${e.attachments.map(attachmentCard).join('')}</div></div>
+<div class="field private"><div class="field-head"><label for="f-privateNotes">🔒 Private notes</label><span class="hint">Never included in reports. Only full backups contain them.</span></div>
+<textarea id="f-privateNotes" data-field="privateNotes" rows="3">${esc(e.privateNotes)}</textarea></div>
+</div>`;
+    updateSaveIndicator();
+    for (const a of e.attachments) {
+      if (!C.isImage(a)) continue;
+      T.readAttachment(a).then((f) => { const img = main.querySelector(`img[data-img="${CSS.escape(a.id)}"]`); if (img) img.src = blobUrl(f); })
+        .catch(() => { const img = main.querySelector(`img[data-img="${CSS.escape(a.id)}"]`); if (img) img.replaceWith(document.createTextNode('⚠️')); });
+    }
+  }
+
+  /* ---------- actions ---------- */
+  async function go(v) { await flushSaves(); view = v; render(); const m = $('#main'); if (m) m.scrollTop = 0; }
+  async function newEntry() {
+    let sectionId = view.kind === 'section' && view.id !== '__unsorted' ? view.id : null;
+    if (!sectionId && view.kind === 'entry') { const cur = currentEntry(); if (cur) sectionId = cur.sectionId; }
+    if (!sectionId) {
+      if (!T.project.sections.length) { const s = await T.addSection('General'); sectionId = s.id; }
+      else sectionId = T.project.sections[0].id;
+    }
+    await flushSaves();
+    const e = await T.newEntry(sectionId, {});
+    view = { kind: 'entry', id: e.id }; render();
+    const ti = $('#f-title'); if (ti) ti.focus();
+  }
+  async function addFiles(files) {
+    const e = currentEntry(); if (!e || !files.length) return;
+    for (const f of files) {
+      const isPaste = !f.name || /^image\.(png|jpe?g|gif)$/i.test(f.name);
+      try { await T.addAttachment(e, f, { name: isPaste ? `screenshot.${C.extOf(f.name, f.type)}` : f.name }); }
+      catch (err) { toast(`Couldn't add ${f.name || 'file'}: ${err.message}`, true); }
+    }
+    saveState.last = new Date();
+    render(); toast(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
+  }
+  async function viewAttachment(id) {
+    const e = currentEntry(); const a = e && e.attachments.find((x) => x.id === id); if (!a) return;
+    let f;
+    try { f = await T.readAttachment(a); } catch (err) { toast(`Couldn't open ${a.name}: ${err.message}`, true); return; }
+    let body;
+    if (C.isImage(a)) body = `<div class="lightbox"><img alt="${esc(a.caption || a.name)}" src="${blobUrl(f)}"></div>`;
+    else if (C.isText(a)) { const max = 256 * 1024; let t = await f.slice(0, max).text(); if (f.size > max) t += `\n… truncated (${C.fmtBytes(f.size)} total)`; body = `<pre class="text">${esc(t)}</pre>`; }
+    else body = `<p>${esc(a.name)} · ${esc(C.fmtBytes(f.size))}. This file type can't be previewed here. Use Download to open it.</p>`;
+    body += `<p class="hint">${esc(a.path)}</p>`;
+    const r = await modal({ title: a.caption || a.name, body, wide: true, buttons: [{ label: 'Download', value: 'dl' }, { label: 'Close', value: null, kind: 'primary' }] });
+    if (r === 'dl') download(a.name, f);
+  }
+  async function buildReport() {
+    await flushSaves();
+    const secs = [...T.project.sections, ...(T.orphanEntries().length ? [{ id: '__unsorted', name: 'Unsorted' }] : [])];
+    const body = `<div class="form">
+<label class="row2">Report title<input type="text" id="r-title" value="${esc(T.project.reportTitle || T.project.title)}"></label>
+<fieldset><legend>Sections</legend>${secs.map((s) => `<label><input type="checkbox" class="r-sec" value="${esc(s.id)}" checked> ${esc(s.name)}</label>`).join('') || '<span class="hint">No sections yet.</span>'}</fieldset>
+<fieldset><legend>Statuses</legend>${STATUSES.map((s) => `<label><input type="checkbox" class="r-st" value="${s.key}" checked> ${s.icon} ${esc(s.label)}</label>`).join('')}</fieldset>
+<label><input type="checkbox" id="r-embed" checked> Embed screenshots, so the report is one self-contained file</label>
+<label><input type="checkbox" id="r-logs" checked> Include the text of log files (first 64 KB of each)</label>
+<label><input type="checkbox" id="r-md" checked> Also save a Markdown version (convert to Word with Pandoc)</label>
+<p class="hint">🔒 Private notes are never included. Reports are saved in the <code>reports</code> folder of your records.</p></div>`;
+    const opts = await modal({ title: 'Build report', body, buttons: [{ label: 'Cancel', value: null }, { label: 'Build report', kind: 'primary', value: (root) => ({
+      title: $('#r-title', root).value.trim() || T.project.title,
+      sections: $$('.r-sec', root).filter((x) => x.checked).map((x) => x.value),
+      statuses: $$('.r-st', root).filter((x) => x.checked).map((x) => x.value),
+      embedImages: $('#r-embed', root).checked, includeLogs: $('#r-logs', root).checked, markdown: $('#r-md', root).checked,
+    }) }] });
+    if (!opts) return;
+    toast('Building report…');
+    const stamp = C.timeStamp();
+    const html = await C.buildReportHTML(T, opts, CATALOG);
+    const htmlBlob = new Blob([html], { type: 'text/html' });
+    const htmlPath = `reports/report-${stamp}.html`;
+    await T.store.writeFile(htmlPath, htmlBlob);
+    let mdBlob = null; const mdPath = `reports/report-${stamp}.md`;
+    if (opts.markdown) { mdBlob = new Blob([C.buildReportMarkdown(T, opts, CATALOG)], { type: 'text/markdown' }); await T.store.writeFile(mdPath, mdBlob); }
+    if (opts.title !== T.project.reportTitle) { T.project.reportTitle = opts.title; await T.saveProject(); }
+    const r = await modal({ title: 'Report ready', body: `<p>Saved <code>${esc(htmlPath)}</code> (${esc(C.fmtBytes(htmlBlob.size))})${mdBlob ? ` and <code>${esc(mdPath)}</code>` : ''} in your records.</p><p class="hint">Open it to read or print to PDF. Download it to share. Check the redaction rules before it leaves the records location.</p>`,
+      buttons: [{ label: 'Download HTML', value: 'html' }, ...(mdBlob ? [{ label: 'Download Markdown', value: 'md' }] : []), { label: 'Open report', value: 'open', kind: 'primary' }, { label: 'Close', value: null }] });
+    if (r === 'html') download(htmlPath.split('/').pop(), htmlBlob);
+    if (r === 'md') download(mdPath.split('/').pop(), mdBlob);
+    if (r === 'open') window.open(URL.createObjectURL(htmlBlob), '_blank');
+    window.__lastReport = { html, path: htmlPath, mdPath: mdBlob ? mdPath : null };
+  }
+  async function openSettings() {
+    const p = T.project;
+    const body = `<div class="form">
+<label class="row2">Tracker title<input type="text" id="s-title" value="${esc(p.title)}"></label>
+<label class="row2">Default report title<input type="text" id="s-rtitle" value="${esc(p.reportTitle || '')}"></label>
+<fieldset><legend>Defaults for new entries</legend><div class="env-grid">${ENV_FIELDS.map((f) => `<label>${esc(f.label)}<input type="text" class="s-def" data-k="${f.key}" value="${esc(p.defaults[f.key] || '')}"></label>`).join('')}</div></fieldset>
+<fieldset><legend>Sections</legend><button class="btn" type="button" data-action="add-standard-sections">Add standard test-catalog sections (ENV, POL, PERM…)</button></fieldset>
+<fieldset><legend>Backup</legend><p class="hint">A full backup contains every entry, attachment, <b>and private note</b>. Store it like the records themselves.</p>
+<button class="btn" type="button" data-action="export-backup">Export full backup</button> <button class="btn" type="button" data-action="import-backup">Import backup…</button></fieldset>
+<fieldset><legend>Storage</legend><p class="hint">${storage.kind === 'folder' ? `Records folder: <b>${esc(storage.name)}</b>` : 'Browser storage (this browser only)'}</p>
+<button class="btn" type="button" data-action="switch-storage">Switch storage…</button> <button class="btn" type="button" data-action="run-selftest">Run self-test</button></fieldset></div>`;
+    const v = await modal({ title: 'Settings', body, buttons: [{ label: 'Cancel', value: null }, { label: 'Save', kind: 'primary', value: (root) => ({
+      title: $('#s-title', root).value.trim(), reportTitle: $('#s-rtitle', root).value.trim(),
+      defaults: Object.fromEntries($$('.s-def', root).map((i) => [i.dataset.k, i.value.trim()])),
+    }) }] });
+    if (!v) return;
+    p.title = v.title || p.title; p.reportTitle = v.reportTitle; p.defaults = Object.assign(p.defaults, v.defaults);
+    await T.saveProject(); render(); toast('Settings saved');
+  }
+  async function runSelfTestUI() {
+    const caps = [
+      ['Open a records folder (File System Access API)', typeof window.showDirectoryPicker === 'function'],
+      ['Browser storage (Origin Private File System)', !!(navigator.storage && navigator.storage.getDirectory)],
+      ['Remember the folder between visits (IndexedDB)', typeof indexedDB !== 'undefined'],
+      ['Secure context', !!window.isSecureContext],
+    ];
+    let results = [];
+    if (navigator.storage && navigator.storage.getDirectory) {
+      try { results = await C.runSelfTest(await navigator.storage.getDirectory()); }
+      catch (err) { results = [{ name: 'Run tests in browser storage', ok: false, detail: err.message }]; }
+    }
+    const allOk = results.length && results.every((r) => r.ok);
+    window.__selfTest = { caps, results };
+    await modal({ title: 'Self-test', body: `<h3>Browser support</h3><ul class="results">${caps.map(([n, ok]) => `<li><span class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'}</span> ${esc(n)}</li>`).join('')}</ul>
+<h3>Functional tests ${results.length ? `<span class="${allOk ? 'ok' : 'bad'}">${results.filter((r) => r.ok).length}/${results.length} passed</span>` : ''}</h3>
+${results.length ? `<ul class="results">${results.map((r) => `<li><span class="${r.ok ? 'ok' : 'bad'}">${r.ok ? '✓' : '✗'}</span> ${esc(r.name)}${r.detail ? ` <span class="hint">${esc(r.detail)}</span>` : ''}</li>`).join('')}</ul>` : '<p class="hint">Skipped: browser storage isn\'t available, so the functional tests can\'t run here.</p>'}
+<p class="hint">The tests run in a temporary folder in browser storage and delete it afterwards. Your records aren't touched.</p>`, buttons: [{ label: 'Close', value: null, kind: 'primary' }] });
+  }
+  async function exportBackupUI() {
+    await flushSaves();
+    const text = await C.exportBackup(T);
+    download(`tracker-backup-${C.timeStamp()}.json`, new Blob([text], { type: 'application/json' }));
+    toast('Backup exported. It contains private notes.');
+  }
+  async function importBackupUI(file) {
+    const text = await file.text();
+    let parsed; try { parsed = JSON.parse(text); } catch (e) { toast('That file isn\'t valid JSON.', true); return; }
+    const n = (parsed.entries || []).length;
+    const ok = await confirmBox('Import backup', `Import ${n} entries and their attachments into ${storage.name}? Entries with the same ID are overwritten.`, 'Import');
+    if (!ok) return;
+    try { const r = await C.importBackup(T, text); render(); toast(`Imported ${r.entries} entries and ${r.files} files.`); }
+    catch (err) { toast(`Import failed: ${err.message}`, true); }
+  }
+
+  const actions = {
+    'choose-folder': chooseFolder,
+    'reconnect': reconnect,
+    'use-browser-storage': useBrowserStorage,
+    'run-selftest': runSelfTestUI,
+    'open-dashboard': () => { filters.q = ''; return go({ kind: 'dashboard' }); },
+    'open-section': (el) => { filters.q = ''; return go({ kind: 'section', id: el.dataset.id }); },
+    'open-entry': (el) => go({ kind: 'entry', id: el.dataset.id }),
+    'new-entry': newEntry,
+    'back': () => { const e = currentEntry(); return go(e && T.section(e.sectionId) ? { kind: 'section', id: e.sectionId } : { kind: 'dashboard' }); },
+    'toggle-status': (el) => { const k = el.dataset.status; if (filters.statuses.has(k)) filters.statuses.delete(k); else filters.statuses.add(k); renderSidebar(); if (view.kind !== 'entry') renderMain(); },
+    'add-section': async () => {
+      const name = await modal({ title: 'Add section', body: '<div class="form"><label class="row2">Section name<input type="text" id="n-sec" placeholder="e.g. Phase 1 · Network egress"></label></div>',
+        buttons: [{ label: 'Cancel', value: null }, { label: 'Add', kind: 'primary', value: (root) => $('#n-sec', root).value.trim() || undefined }] });
+      if (!name) return;
+      const s = await T.addSection(name); await go({ kind: 'section', id: s.id });
+    },
+    'rename-section': async () => {
+      const s = T.section(view.id); if (!s) return;
+      const name = await modal({ title: 'Rename section', body: `<div class="form"><label class="row2">Section name<input type="text" id="n-sec" value="${esc(s.name)}"></label></div>`,
+        buttons: [{ label: 'Cancel', value: null }, { label: 'Rename', kind: 'primary', value: (root) => $('#n-sec', root).value.trim() || undefined }] });
+      if (!name) return;
+      await T.renameSection(s.id, name); render();
+    },
+    'move-section': async (el) => { await T.moveSection(view.id, +el.dataset.delta); render(); },
+    'delete-section': async () => {
+      const s = T.section(view.id); if (!s) return;
+      if (T.entriesIn(s.id).length) { toast('Move or delete the entries in this section first.', true); return; }
+      if (!(await confirmBox('Delete section', `Delete the empty section “${s.name}”?`, 'Delete', true))) return;
+      await T.deleteSection(s.id); await go({ kind: 'dashboard' });
+    },
+    'set-status': async (el) => {
+      const e = currentEntry(); if (!e) return;
+      e.status = el.dataset.status;
+      $$('.status-btn').forEach((b) => { const on = b.dataset.status === e.status; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+      await doSave(e); renderSidebar();
+    },
+    'add-timestamp': () => {
+      const e = currentEntry(); const ta = $('#f-fixSteps'); if (!e || !ta) return;
+      const d = new Date(); const line = `[${C.fmtDate(d.toISOString())}] `;
+      ta.value = ta.value.trim() ? `${ta.value.replace(/\s+$/, '')}\n${line}` : line;
+      e.fixSteps = ta.value; scheduleSave(e); ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length;
+    },
+    'pick-files': () => $('#file-picker').click(),
+    'view-attachment': (el) => viewAttachment(el.dataset.id),
+    'download-attachment': async (el) => {
+      const e = currentEntry(); const a = e && e.attachments.find((x) => x.id === el.dataset.id); if (!a) return;
+      download(a.name, await T.readAttachment(a));
+    },
+    'remove-attachment': async (el) => {
+      const e = currentEntry(); const a = e && e.attachments.find((x) => x.id === el.dataset.id); if (!a) return;
+      if (!(await confirmBox('Remove attachment', `Remove ${a.name}? The file is deleted from the records folder.`, 'Remove', true))) return;
+      await T.removeAttachment(e, a.id); render();
+    },
+    'delete-entry': async () => {
+      const e = currentEntry(); if (!e) return;
+      if (!(await confirmBox('Delete entry', `Delete “${e.title || '(untitled)'}” and its ${e.attachments.length} attachment(s)? This can't be undone.`, 'Delete', true))) return;
+      clearTimeout(timers.get(e.id)); timers.delete(e.id);
+      const sec = e.sectionId; await T.deleteEntry(e.id);
+      view = T.section(sec) ? { kind: 'section', id: sec } : { kind: 'dashboard' }; render(); toast('Entry deleted');
+    },
+    'build-report': buildReport,
+    'open-settings': openSettings,
+    'add-standard-sections': async () => { const added = await T.addStandardSections(); renderSidebar(); toast(added.length ? `Added ${added.length} sections` : 'Standard sections already exist'); },
+    'export-backup': exportBackupUI,
+    'import-backup': () => $('#backup-picker').click(),
+    'switch-storage': async () => { $$('.modal-back').forEach((m) => m.remove()); await switchStorage(); },
+  };
+
+  document.addEventListener('click', (ev) => {
+    const el = ev.target.closest('[data-action]');
+    if (!el || !actions[el.dataset.action]) return;
+    if (el.tagName === 'A') ev.preventDefault();
+    Promise.resolve(actions[el.dataset.action](el, ev)).catch((err) => { console.error(err); toast(err.message || String(err), true); });
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && ev.target.matches('.row[data-action]')) { ev.target.click(); return; }
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') { const s = $('#search'); if (s) { ev.preventDefault(); s.focus(); s.select(); } }
+    if (ev.altKey && ev.key.toLowerCase() === 'n' && T && !$('.modal-back')) { ev.preventDefault(); newEntry().catch((err) => toast(err.message, true)); }
+  });
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (t.id === 'search') {
+      filters.q = t.value;
+      if (view.kind === 'entry') { flushSaves().catch(() => {}); view = { kind: 'dashboard' }; }
+      renderMain(); return;
+    }
+    const e = currentEntry(); if (!e) return;
+    if (t.id === 'f-title') { e.title = t.value; scheduleSave(e); }
+    else if (t.dataset.field) { e[t.dataset.field] = t.value; scheduleSave(e); }
+    else if (t.dataset.env) { e.env[t.dataset.env] = t.value; scheduleSave(e); }
+    else if (t.dataset.caption) { const a = e.attachments.find((x) => x.id === t.dataset.caption); if (a) { a.caption = t.value; scheduleSave(e); } }
+    else if (t.id === 'f-testId') { $('#cat-hint').innerHTML = catHint(t.value); }
+  });
+  document.addEventListener('change', async (ev) => {
+    const t = ev.target; const e = currentEntry();
+    try {
+      if (t.id === 'file-picker') { const files = [...t.files]; t.value = ''; await addFiles(files); return; }
+      if (t.id === 'backup-picker') { const f = t.files[0]; t.value = ''; if (f) await importBackupUI(f); return; }
+      if (!e) return;
+      if (t.id === 'f-section') { e.sectionId = t.value; await doSave(e); renderSidebar(); const back = $('[data-action="back"]'); const s = T.section(e.sectionId); if (back && s) back.textContent = `← ${s.name}`; }
+      if (t.id === 'f-testId') {
+        await flushSaves();
+        const id = C.cleanTestId(t.value);
+        if (id !== e.testId) {
+          await T.setTestId(e, id);
+          const ct = CAT.get(id);
+          if (ct && !e.title.trim()) { e.title = ct.title; await T.saveEntry(e); }
+          render();
+        }
+      }
+    } catch (err) { toast(err.message, true); }
+  });
+  document.addEventListener('paste', (ev) => {
+    if (!currentEntry() || $('.modal-back')) return;
+    const files = [...(ev.clipboardData ? ev.clipboardData.files : [])];
+    if (!files.length) return;
+    ev.preventDefault();
+    addFiles(files).catch((err) => toast(err.message, true));
+  });
+  document.addEventListener('dragover', (ev) => { if (!currentEntry()) return; ev.preventDefault(); const dz = $('#dropzone'); if (dz) dz.classList.add('over'); });
+  document.addEventListener('dragleave', (ev) => { if (ev.relatedTarget === null) { const dz = $('#dropzone'); if (dz) dz.classList.remove('over'); } });
+  document.addEventListener('drop', (ev) => {
+    if (!currentEntry()) return;
+    ev.preventDefault(); const dz = $('#dropzone'); if (dz) dz.classList.remove('over');
+    const files = [...(ev.dataTransfer ? ev.dataTransfer.files : [])];
+    if (files.length) addFiles(files).catch((err) => toast(err.message, true));
+  });
+
+  function buildDatalist() {
+    $('#catalog-ids').innerHTML = CATALOG.map((t) => `<option value="${esc(t.id)}">${esc(`${t.pri} · ${t.title}`)}</option>`).join('');
+  }
+
+  async function start() {
+    buildDatalist();
+    try {
+      const saved = await IDB.get('storage');
+      if (saved && saved.kind === 'opfs') { await useBrowserStorage(); return; }
+      if (saved && saved.kind === 'folder' && saved.handle) {
+        const p = await saved.handle.queryPermission({ mode: 'readwrite' });
+        if (p === 'granted') { await openStore(saved.handle, { kind: 'folder', name: saved.handle.name }); return; }
+        pendingHandle = saved.handle;
+      }
+    } catch (err) { console.warn('Tracker start:', err); }
+    render();
+  }
+  window.__tracker = { get T() { return T; }, get view() { return view; }, flushSaves, addFiles, go, actions };
+  start();
+})();
+</script>
+</body>
+</html>

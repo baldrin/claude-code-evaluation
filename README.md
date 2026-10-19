@@ -77,6 +77,7 @@ gantt
 | **Evidence** | [Evidence rules & index](evidence/README.md) |
 | **Reports** | [Phase 1: Security & configuration](reports/phase1-security-configuration-report.md) · [Phase 2: Pilot results](reports/phase2-pilot-report.md) · [Executive summary](reports/executive-summary.md) |
 | **Templates** | [Style guide & templates](templates/README.md) |
+| **Tools** | [Test tracker](tools/tracker/README.md): record each step with status, notes, screenshots, and logs, then build one report |
 
 ## How the pieces connect
 
