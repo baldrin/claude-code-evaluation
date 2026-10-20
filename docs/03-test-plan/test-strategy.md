@@ -2,8 +2,8 @@
 title: Test strategy
 status: Draft
 owner: <evaluation-lead>
-last_updated: 2026-10-19
-version: 0.2
+last_updated: 2026-10-20
+version: 0.3
 phase: "1-2"
 ---
 
@@ -80,11 +80,22 @@ flowchart LR
 ## How to run a test
 
 1. **Prepare.** Confirm the preconditions. Note the policy hash, image digest, and `claude --version`.
-2. **Start recording.** `script -q evidence/<ID>/raw/<date>-session.log`, or a screen recording for UI tests.
+2. **Start recording.** For a UI test, start a screen recording. For a terminal test, record the session inside the container, in a folder outside the workspace. That way the log isn't committed with the code, and the agent's sandboxed commands can't change it. Type `exit` to stop recording.
+
+   ```bash
+   mkdir -p ~/session-logs && script -q ~/session-logs/<ID>-session.log
+   ```
+
 3. **Execute** the steps exactly. If you deviate, write down why.
 4. **Capture** the expected-result proof and the negative case.
 5. **Judge** against the expected result using the [verdict rules](#verdict-rules).
-6. **Record.** Add an entry in the [tracker](../../tools/tracker/README.md) ([ADR-019](../../logs/decision-log.md#adr-019)) with the test ID, what you did, the result, any fix steps, and the attachments. Without the tracker, create `evidence/<ID>/RESULT.md` from [the template](../../templates/test-result.md). Update the Result cell in the catalog. Add a row to the [evidence index](../../evidence/README.md#evidence-index).
+6. **Record.** Copy the session log from the container to the VDI:
+
+   ```powershell
+   docker cp <container>:/home/dev/session-logs/<ID>-session.log $env:TEMP\
+   ```
+
+   Then add an entry in the [tracker](../../tools/tracker/README.md) ([ADR-019](../../logs/decision-log.md#adr-019)) with the test ID, what you did, the result, any fix steps, and the attachments, including the log. The tracker saves attachments in the [records repo](../../tools/tracker/README.md#setting-up-the-records-repo) under `evidence/<ID>/`. Delete the temporary copy once it's attached. Never save logs or unredacted evidence in this repo. Without the tracker, create `evidence/<ID>/RESULT.md` in the records repo from [the template](../../templates/test-result.md). Update the Result cell in the catalog. Add a row to the [evidence index](../../evidence/README.md#evidence-index).
 7. **Raise** a finding ([template](../../templates/finding.md)) for any 🟨 or 🟥. Link it from the result.
 8. **Journal** the test in the day's [journal entry](../../logs/journal/README.md).
 

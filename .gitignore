@@ -1,4 +1,4 @@
-# Unredacted evidence originals stay local / in the secure evidence store
+# Safety net: unredacted originals belong in the records repo, never in this repo
 evidence/**/raw/
 *.unredacted.*
 

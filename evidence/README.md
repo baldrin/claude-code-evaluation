@@ -3,7 +3,7 @@ title: Evidence rules and index
 status: Final
 owner: <evaluation-lead>
 last_updated: 2026-10-20
-version: 1.2
+version: 1.3
 ---
 
 # Evidence rules and index
@@ -114,7 +114,7 @@ Before anything goes into git:
 
 ## Secure evidence store
 
-Unredacted originals go in `<secure-evidence-store>` (for example, a restricted SharePoint or Azure storage container), using the same folder and file names. `.gitignore` excludes `evidence/**/raw/`, so you can keep originals locally under a `raw/` subfolder while you work.
+Unredacted originals go in the [records repo](../tools/tracker/README.md#setting-up-the-records-repo), or another restricted `<secure-evidence-store>` (for example, a SharePoint site or Azure storage container), using the same folder and file names. **Don't keep them in this repo, even in an ignored folder.** `.gitignore` still excludes `evidence/**/raw/` and `*.unredacted.*` as a safety net.
 
 ## Evidence index
 
