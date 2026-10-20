@@ -2,8 +2,8 @@
 title: Evidence rules and index
 status: Final
 owner: <evaluation-lead>
-last_updated: 2026-10-19
-version: 1.1
+last_updated: 2026-10-20
+version: 1.2
 ---
 
 # Evidence rules and index
@@ -29,7 +29,7 @@ Evidence is what makes the reports defensible. Every verdict in the test catalog
 >
 > - Not in the single GitHub repo the agent's token can reach, and not in any repo cloned into a dev container.
 > - Not in any folder shared into Docker Desktop or mounted into a container.
-> - On the evaluation lead's own workstation (or the secure evidence store), in a separate records repo or folder such as `<org>/claude-code-eval-records` or `C:\EvalRecords\`.
+> - On the evaluation lead's own workstation (or the secure evidence store), in a separate records repo or folder such as `<org>/claude-code-eval-records` or `C:\EvalRecords\`. See [setting up the records repo](../tools/tracker/README.md#setting-up-the-records-repo).
 >
 > This docs repo holds the plan, the templates, and **redacted** evidence that has been copied in deliberately. The working records stay in the records location until they're redacted and published.
 

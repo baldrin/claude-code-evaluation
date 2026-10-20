@@ -2,7 +2,7 @@
 title: Claude Code Enterprise Evaluation
 status: In review
 owner: <evaluation-lead>
-last_updated: 2026-10-19
+last_updated: 2026-10-20
 version: 0.2
 phase: "1-2"
 ---
@@ -113,5 +113,5 @@ The full conventions are in the [style guide](templates/README.md).
 > **No secrets or real identifiers in this repo.** Use placeholders (`<foundry-resource>`, `<tenant-id>`, `<org>`). Raw evidence that contains real values goes in the secure evidence store, not in git. See [evidence/README.md](evidence/README.md).
 
 - Claims about Claude Code behavior cite the official docs at <https://code.claude.com/docs>. Anything not yet confirmed on our build is tagged `[verify]` and linked to a test.
-- **Test records stay out of the agent's reach.** Tracker data, evidence, and private notes live outside the single repo Claude Code works on and are never mounted into a container ([ADR-019](logs/decision-log.md#adr-019), [R-27](logs/risk-register.md#r-27)). Don't use this docs repo as the agent's repo either.
+- **Test records stay out of the agent's reach.** Tracker data, evidence, and private notes live outside the single repo Claude Code works on and are never mounted into a container ([ADR-019](logs/decision-log.md#adr-019), [R-27](logs/risk-register.md#r-27)). Don't use this docs repo as the agent's repo either. Keep them in a separate records repo ([setup](tools/tracker/README.md#setting-up-the-records-repo)).
 - Results are valid only for the version they were run on. **Built against Claude Code 2.1.301.**
