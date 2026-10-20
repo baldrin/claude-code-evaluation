@@ -47,7 +47,7 @@ Keep the records in their own private git repo. You get a history of every chang
    git clone https://github.com/<org>/claude-code-eval-records.git C:\EvalRecords\claude-code-eval-records
    ```
 
-3. **Add the [starter files](#starter-files)** to the top folder of the clone, then commit and push.
+3. **Add the [starter files](#starter-files)** to the top folder of the clone. Also copy [templates/tasks.md](../../templates/tasks.md) in as `TASKS.md`, your task list ([start here](../../START-HERE.md#set-up)). Then commit and push.
 4. **Point the tracker at it.** Open `tracker.html` in Edge, click **Choose records folder…**, and pick `C:\EvalRecords\claude-code-eval-records`. The tracker creates `tracker.json`, `entries/`, and `evidence/` there. Keep a copy of `tracker.html` in `C:\EvalRecords\` so it's easy to find.
 5. **Commit at the end of each testing day.** Wait until the tracker shows **Saved**, then:
 
@@ -87,6 +87,7 @@ The tracker (`tracker.html` from the docs repo) writes everything here.
 
 | Path | Contents |
 |---|---|
+| `TASKS.md` | Task list (from the docs repo's `templates/tasks.md`) |
 | `tracker.json` | Tracker title, sections, and defaults |
 | `entries/` | One JSON file per entry, including private notes |
 | `evidence/<TEST-ID>/` | Screenshots and logs for entries with a test ID |

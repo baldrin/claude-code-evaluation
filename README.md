@@ -17,6 +17,9 @@ This is the evaluation plan, test record, and reporting kit for adopting **Claud
 | 💰 | **Cost** | What does it cost per developer, and can we predict and cap it? | [Cost model](docs/05-cost/cost-model.md) → [COST tests](docs/03-test-plan/catalog/cost.md) → [Phase 2 report](reports/phase2-pilot-report.md) |
 | 🚀 | **Productivity & quality** | Do developers ship more, faster, without hurting quality? | [Measurement framework](docs/06-productivity-quality/measurement-framework.md) → [Phase 2 report](reports/phase2-pilot-report.md) |
 
+> [!TIP]
+> **Running the evaluation? [Start here](START-HERE.md)** for the reading order, the setup, and the daily and weekly routine.
+
 > [!IMPORTANT]
 > **Environment under evaluation:** Claude Code in a **Linux dev container on an isolated Windows VDI** (BeyondTrust jump host, Guardicore), using **Docker Desktop on the Hyper-V backend**. Models are served by **Microsoft Foundry** with **Entra ID only** (no API keys), first directly and then through the **Claude apps gateway** for per-user caps ([ADR-013](logs/decision-log.md#adr-013)). Claude Code, packages, and VS Code components come only from **Nexus**. **GitHub** access is limited to one repository per developer. Web search and fetch are off. The production target is the same images on users' PCs ([ADR-018](logs/decision-log.md#adr-018)). See the [reference architecture](docs/01-architecture/reference-architecture.md).
 
@@ -65,6 +68,7 @@ gantt
 
 | Section | What's inside |
 |---|---|
+| **Start here** | [Start here](START-HERE.md): reading order, setup, the daily and weekly routine, and where things go |
 | **00 · Charter** | [Charter](docs/00-charter/charter.md) · [Success criteria](docs/00-charter/success-criteria.md) |
 | **01 · Architecture** | [Reference architecture](docs/01-architecture/reference-architecture.md) · [Identity & access](docs/01-architecture/identity-and-access.md) · [Network egress](docs/01-architecture/network-egress.md) · [Threat model](docs/01-architecture/threat-model.md) |
 | **02 · Security baseline** | [Defense in depth (control list)](docs/02-security-baseline/defense-in-depth.md) · [Managed settings](docs/02-security-baseline/managed-settings.md) · [Permissions](docs/02-security-baseline/permissions-policy.md) · [Sandbox](docs/02-security-baseline/sandbox-policy.md) · [Extensions](docs/02-security-baseline/extension-controls.md) · [Data handling](docs/02-security-baseline/data-handling.md) |

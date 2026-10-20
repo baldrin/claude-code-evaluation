@@ -2,8 +2,8 @@
 title: Templates and Style Guide
 status: Final
 owner: <evaluation-lead>
-last_updated: 2026-10-19
-version: 1.1
+last_updated: 2026-10-20
+version: 1.2
 ---
 
 # Templates and Style Guide
@@ -22,6 +22,7 @@ Every document in this repository uses the same conventions. That keeps the evid
 | [adr.md](adr.md) | An architecture or policy decision | `logs/decision-log.md` |
 | [journal-entry.md](journal-entry.md) | Daily working notes | `logs/journal/YYYY-MM-DD.md` |
 | [weekly-status.md](weekly-status.md) | Weekly status update to stakeholders | `logs/journal/week-NN-status.md` |
+| [tasks.md](tasks.md) | Your working task list, with a starter backlog. Once filled in, it names real people, so it lives in the records repo. It has no front matter because it changes daily. | `TASKS.md` in the records repo |
 
 > [!NOTE]
 > Relative links inside the templates are written for the **destination** folder in the "Copy to" column, so they resolve once the file is copied there.
